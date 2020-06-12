@@ -1,0 +1,12 @@
+# pkg-config file for uninstalled camgazebo interface and codels library
+#
+prefix=@abs_top_builddir@
+libdir=${prefix}/codels
+includedir=${prefix}/codels
+
+Name: camgazebo-genom3
+Description: camgazebo interface and codels library
+Version: @PACKAGE_VERSION@
+Requires: openrobots2-idl >= 2.0, genom3 >= 2.99.26
+Libs: ${libdir}/libcamgazebo_codels.la
+Libs.private: @codels_requires_LIBS@
