@@ -112,7 +112,13 @@ a|.Data structure
 |===
 a|.Inputs
 [disc]
- * `string<64>` `name` name of camera device in gazebo
+ * `string<64>` `world` name of gazebo world
+
+ * `string<64>` `model` gazebo model containing the sensor
+
+ * `string<64>` `link` gazebo link containing the sensor
+
+ * `string<64>` `sensor` name of the gazebo sensor
 
 a|.Context
 [disc]
@@ -136,35 +142,6 @@ a|.Context
 
 '''
 
-[[stop_display]]
-=== stop_display (function)
-
-
-'''
-
-[[record]]
-=== record (activity)
-
-[role="small", width="50%", float="right", cols="1"]
-|===
-a|.Inputs
-[disc]
- * `string<64>` `path` (default `"/tmp/"`) Video files path
-
-a|.Context
-[disc]
-  * In task `<<publish>>`
-  (frequency 58.8235294117647 _Hz_)
-|===
-
-'''
-
-[[stop_record]]
-=== stop_record (function)
-
-
-'''
-
 [[set_extrinsics]]
 === set_extrinsics (activity)
 
@@ -176,8 +153,27 @@ a|.Inputs
 
 a|.Context
 [disc]
-  * In task `<<hw_comm>>`
+  * In task `<<main>>`
+  (frequency 58.8235294117647 _Hz_)
   * Updates port `<<extrinsics>>`
+|===
+
+'''
+
+[[set_intrinsics]]
+=== set_intrinsics (activity)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `sequence< double, 10 >` `int_values`
+
+a|.Context
+[disc]
+  * In task `<<main>>`
+  (frequency 58.8235294117647 _Hz_)
+  * Updates port `<<intrinsics>>`
 |===
 
 '''

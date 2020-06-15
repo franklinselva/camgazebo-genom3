@@ -42,7 +42,7 @@ module or {
 
     /* ---- Camera calibration -------------------------------------------- */
     struct intrinsics {                       // Calibration matrix (fx, fy, cx, cy, gamma) and Distortion coefficients
-        sequence<float,5>   calib, disto;
+        sequence<float,5> calib, disto;
     };
     struct extrinsics {                       // Extrinsic transformation from world frame (or, usually, body frame) to camera frame
         double tx, ty, tz, roll, pitch, yaw;

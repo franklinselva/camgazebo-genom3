@@ -46,7 +46,6 @@ component camgazebo {
 
         or_camera::info info;
         or_camera::pipe pipe;
-        or_camera::data data;
     };
 
     const unsigned short pub_period_ms = 17;
@@ -66,10 +65,13 @@ component camgazebo {
 
     /* ---- Hardware connection ------------------------------------------- */
 
-    activity connect(in string<64> name = : "name of camera device in gazebo") {
+    activity connect(in string<64> world = : "name of gazebo world",
+                     in string<64> model = : "gazebo model containing the sensor",
+                     in string<64> link = : "gazebo link containing the sensor",
+                     in string<64> sensor = : "name of the gazebo sensor") {
         task main;
 
-        codel<start> camgz_connect(in name, out pipe, out intrinsics, out info.started)
+        codel<start> camgz_connect(in world, in model, in link, in sensor, out pipe, out intrinsics, out info.started)
             yield ether;
     };
 
@@ -115,13 +117,20 @@ component camgazebo {
     // function stop_record() {
     //     codel camgz_stop_record();
     // };
-    //
-    // /* ---- Calibration --------------------------------------------------- */
-    //
-    // activity set_extrinsics(in sequence<double,6> ext_values) {
-    //     task main;
-    //
-    //     codel<start> camgz_set_extrinsics(in ext_values, out extrinsics)
-    //         yield ether;
-    // };
+
+    /* ---- Calibration --------------------------------------------------- */
+
+    activity set_extrinsics(in sequence<double,6> ext_values) {
+        task main;
+
+        codel<start> camgz_set_extrinsics(in ext_values, out extrinsics)
+            yield ether;
+    };
+
+    activity set_intrinsics(in sequence<double,10> int_values) {
+        task main;
+
+        codel<start> camgz_set_intrinsics(in int_values, out intrinsics)
+            yield ether;
+    };
 };
