@@ -26,8 +26,8 @@
 #include "camgazebo_c_types.h"
 
 #include "codels.hpp"
-#include <opencv2/opencv.hpp>
 #include <iostream>
+#include <err.h>
 
 using std::cout;
 using std::endl;
@@ -36,15 +36,24 @@ using std::endl;
 or_camera_data* cgz_data;
 
 /* --- Callback --------------------------------------------------------- */
-void camgz_cb(ConstImageStampedPtr& _msg) {
-    if (_msg->image().width() != cgz_data->w ||
-        _msg->image().height() != cgz_data->h) {
-        cgz_data->w = _msg->image().width();
-        cgz_data->h = _msg->image().height();
-        // +1 for null terminate
-        cgz_data->data = new uint8_t[_msg->image().data().length()];
-    }
-    memcpy(cgz_data->data, _msg->image().data().c_str(), _msg->image().data().length());
+void camgz_cb(ConstImageStampedPtr& _msg)
+{
+    if (_msg->image().data().length() != cgz_data->l)
+        warnx("Skipping frame, incorrect size");
+    else
+        memcpy(cgz_data->data, _msg->image().data().c_str(), _msg->image().data().length());
+}
+
+/* --- Calib ------------------------------------------------------------ */
+void compute_calib(or_sensor_intrinsics* intr, double hfov, uint16_t w, uint16_t h)
+{
+    double vfov = hfov*h/w;
+
+    intr->calib._buffer[0] = w/2/tan(hfov/2);
+    intr->calib._buffer[1] = h/2/tan(vfov/2);
+    intr->calib._buffer[2] = 0;
+    intr->calib._buffer[3] = w/2;
+    intr->calib._buffer[4] = h/2;
 }
 
 /* --- Task main -------------------------------------------------------- */
@@ -58,16 +67,33 @@ void camgz_cb(ConstImageStampedPtr& _msg) {
 genom_event
 camgz_start(camgazebo_ids *ids, const camgazebo_frame *frame,
             const camgazebo_extrinsics *extrinsics,
+            const camgazebo_intrinsics *intrinsics,
             const genom_context self)
 {
+    cgz_data = new or_camera_data();
+
+    ids->pipe = new or_camera_pipe();
+    ids->info.started = false;
+    ids->hfov = 1.047;
+    ids->w = 1920;
+    ids->h = 1080;
+
     // Init values for extrinsics
     *extrinsics->data(self) = {0,0,0, 0,0,0};
     extrinsics->write(self);
 
-    cgz_data = new or_camera_data();
+    // Init values for intrinsics
+    or_sensor_intrinsics* intr = intrinsics->data(self);
+    compute_calib(intr, ids->hfov, ids->w, ids->h);
+    intr->disto._buffer[0] = 0;
+    intr->disto._buffer[1] = 0;
+    intr->disto._buffer[2] = 0;
+    intr->disto._buffer[3] = 0;
+    intr->disto._buffer[4] = 0;
 
-    ids->info.started = false;
-    ids->pipe = new or_camera_pipe();
+    *intrinsics->data(self) = *intr;
+    intrinsics->write(self);
+
     return camgazebo_wait;
 }
 
@@ -93,33 +119,26 @@ camgz_wait(bool started, const genom_context self)
  * Yields to camgazebo_pause_wait.
  */
 genom_event
-camgz_pub(const camgazebo_frame *frame, const genom_context self)
+camgz_pub(uint16_t h, uint16_t w, const camgazebo_frame *frame,
+          const genom_context self)
 {
     or_sensor_frame* fdata = frame->data(self);
 
-    uint32_t l = cgz_data->h * cgz_data->w * cgz_data->bpp;
-    if (l > fdata->pixels._maximum)
-        if (genom_sequence_reserve(&(fdata->pixels), l) == -1) {
+    if (cgz_data->l > fdata->pixels._maximum)
+        if (genom_sequence_reserve(&(fdata->pixels), cgz_data->l) == -1) {
             camgazebo_e_mem_detail d;
             snprintf(d.what, sizeof(d.what), "unable to allocate frame memory");
             printf("camgazebo: %s\n", d.what);
             return camgazebo_e_mem(&d,self);
         }
-    fdata->height = cgz_data->h;
-    fdata->width = cgz_data->w;
-    fdata->bpp = cgz_data->bpp;
-    fdata->pixels._length = l;
-    memcpy(fdata->pixels._buffer, cgz_data->data, l);
+    fdata->height = h;
+    fdata->width = w;
+    fdata->bpp = 3;
+    fdata->pixels._length = cgz_data->l;
+    memcpy(fdata->pixels._buffer, cgz_data->data, cgz_data->l);
 
     *(frame->data(self)) = *fdata;
-
-    if (l>0) {
-        cv::Mat cvRGB(cv::Size(fdata->width, fdata->height), CV_8UC3, (void*)cgz_data->data, cv::Mat::AUTO_STEP);
-        cv::Mat cvBGR;
-        cv::cvtColor(cvRGB, cvBGR, cv::COLOR_RGB2BGR);  // realsense data is RGB
-        cv::imshow("frame", cvBGR);
-        cv::waitKey(1);
-    }
+    frame->write(self);
 
     return camgazebo_pause_wait;
 }
@@ -150,22 +169,6 @@ camgz_connect(const char world[64], const char model[64],
     cout << "camgazebo: connected to " << topic << endl;
     *started = true;
 
-    return camgazebo_ether;
-}
-
-
-/* --- Activity disconnect ---------------------------------------------- */
-
-/** Codel camgz_disconnect of activity disconnect.
- *
- * Triggered by camgazebo_start.
- * Yields to camgazebo_ether.
- */
-genom_event
-camgz_disconnect(bool *started, const genom_context self)
-{
-    gazebo::client::shutdown();
-    *started = false;
     return camgazebo_ether;
 }
 
@@ -204,34 +207,79 @@ camgz_set_extrinsics(const sequence6_double *ext_values,
 }
 
 
-/* --- Activity set_intrinsics ------------------------------------------ */
+/* --- Activity set_hfov ------------------------------------------------ */
 
-/** Codel camgz_set_intrinsics of activity set_intrinsics.
+/** Codel camgz_set_hfov of activity set_hfov.
  *
  * Triggered by camgazebo_start.
  * Yields to camgazebo_ether.
  */
 genom_event
-camgz_set_intrinsics(const sequence10_double *int_values,
-                     const camgazebo_intrinsics *intrinsics,
-                     const genom_context self)
+camgz_set_hfov(float hfov_val, float *hfov, uint16_t h, uint16_t w,
+               const camgazebo_intrinsics *intrinsics,
+               const genom_context self)
 {
-    cout << "camgazebo: new intrinsic calibration";
-    or_sensor_intrinsics intr;
-    intr.calib._buffer[0] = int_values->_buffer[0];
-    intr.calib._buffer[1] = int_values->_buffer[1];
-    intr.calib._buffer[2] = int_values->_buffer[2];
-    intr.calib._buffer[3] = int_values->_buffer[3];
-    intr.calib._buffer[4] = int_values->_buffer[4];
+    *hfov = hfov_val;
 
-    intr.disto._buffer[5] = int_values->_buffer[5];
-    intr.disto._buffer[6] = int_values->_buffer[6];
-    intr.disto._buffer[7] = int_values->_buffer[7];
-    intr.disto._buffer[8] = int_values->_buffer[8];
-    intr.disto._buffer[9] = int_values->_buffer[9];
-
-    *intrinsics->data(self) = intr;
+    or_sensor_intrinsics* intr = intrinsics->data(self);
+    compute_calib(intr, *hfov, w, h);
+    *intrinsics->data(self) = *intr;
     intrinsics->write(self);
+
+    return camgazebo_ether;
+}
+
+
+/* --- Activity set_format ---------------------------------------------- */
+
+/** Codel camgz_set_fmt of activity set_format.
+ *
+ * Triggered by camgazebo_start.
+ * Yields to camgazebo_ether.
+ */
+genom_event
+camgz_set_fmt(uint16_t w_val, uint16_t *w, uint16_t h_val, uint16_t *h,
+              float hfov, const camgazebo_intrinsics *intrinsics,
+              const genom_context self)
+{
+    *w = w_val;
+    *h = h_val;
+
+    cgz_data->l = *h * *w * 3;
+
+    or_sensor_intrinsics* intr = intrinsics->data(self);
+    compute_calib(intr, hfov, *w, *h);
+    *intrinsics->data(self) = *intr;
+    intrinsics->write(self);
+
+    return camgazebo_ether;
+}
+
+
+/* --- Activity set_disto ----------------------------------------------- */
+
+/** Codel camgz_set_disto of activity set_disto.
+ *
+ * Triggered by camgazebo_start.
+ * Yields to camgazebo_ether.
+ */
+genom_event
+camgz_set_disto(const sequence5_double *dist_values,
+                const camgazebo_intrinsics *intrinsics,
+                const genom_context self)
+{
+    or_sensor_intrinsics* intr = intrinsics->data(self);
+
+    intr->disto._buffer[0] = dist_values->_buffer[0];
+    intr->disto._buffer[1] = dist_values->_buffer[1];
+    intr->disto._buffer[2] = dist_values->_buffer[2];
+    intr->disto._buffer[3] = dist_values->_buffer[3];
+    intr->disto._buffer[4] = dist_values->_buffer[4];
+
+    *intrinsics->data(self) = *intr;
+    intrinsics->write(self);
+
+    warnx("camgazebo: new distorsion parameters");
 
     return camgazebo_ether;
 }

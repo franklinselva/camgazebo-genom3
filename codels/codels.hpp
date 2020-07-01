@@ -35,8 +35,6 @@ struct or_camera_pipe {
 };
 
 struct or_camera_data {
-    uint16_t w = 0;
-    uint16_t h = 0;
-    uint16_t bpp = 3; // gazebo is always rgb8
-    uint8_t* data = new uint8_t[0];
+    uint64_t l = 1920 * 1080 * 3;
+    uint8_t* data = new uint8_t[l];
 };

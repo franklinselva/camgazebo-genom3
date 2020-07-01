@@ -25,18 +25,20 @@
 
 #include "camgazebo_c_types.h"
 
+#include "codels.hpp"
 
-/* --- Function stop_display -------------------------------------------- */
+/* --- Function disconnect ---------------------------------------------- */
 
-/** Codel camgz_stop_display of function stop_display.
+/** Codel camgz_disconnect of function disconnect.
  *
  * Returns genom_ok.
  */
 genom_event
-camgz_stop_display(const genom_context self)
+camgz_disconnect(bool *started, const genom_context self)
 {
-  /* skeleton sample: insert your code */
-  /* skeleton sample */ return genom_ok;
+    gazebo::client::shutdown();
+    *started = false;
+    return genom_ok;
 }
 
 

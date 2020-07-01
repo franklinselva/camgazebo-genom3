@@ -34,7 +34,7 @@ component camgazebo {
     email           "martin.jacquet@laas.fr";
     lang			"c";
     require         "genom3 >= 2.99.26";
-    codels-require  "gazebo", "opencv";
+    codels-require  "gazebo";
 
     provides or_camera;
 
@@ -46,6 +46,10 @@ component camgazebo {
 
         or_camera::info info;
         or_camera::pipe pipe;
+
+        float hfov;
+        unsigned short w;
+        unsigned short h;
     };
 
     const unsigned short pub_period_ms = 17;
@@ -53,13 +57,13 @@ component camgazebo {
     task main {
         period pub_period_ms ms;
 
-        codel<start> camgz_start(out ::ids, out frame, out extrinsics)
+        codel<start> camgz_start(out ::ids, out frame, out extrinsics, out intrinsics)
             yield wait;
 
         codel<wait> camgz_wait(in info.started)
             yield pause::wait, pub;
 
-        codel<pub> camgz_pub(out frame)
+        codel<pub> camgz_pub(in h, in w, out frame)
             yield pause::wait;
     };
 
@@ -75,11 +79,8 @@ component camgazebo {
             yield ether;
     };
 
-    activity disconnect() {
-        task main;
-
-        codel<start> camgz_disconnect(out info.started)
-            yield ether;
+    function disconnect() {
+        codel camgz_disconnect(out info.started);
     };
 
     /* ---- Display/Record ------------------------------------------------ */
@@ -127,10 +128,24 @@ component camgazebo {
             yield ether;
     };
 
-    activity set_intrinsics(in sequence<double,10> int_values) {
+    activity set_hfov(in float hfov_val = 1.047 : "Camera horizon FOV (in radians)") {
         task main;
 
-        codel<start> camgz_set_intrinsics(in int_values, out intrinsics)
+        codel<start> camgz_set_hfov(in hfov_val, out hfov, in h, in w, out intrinsics)
+            yield ether;
+    };
+
+    activity set_format(in unsigned short w_val = 1920 : "Camera pixel width",
+                        in unsigned short h_val = 1080 : "Camera pixel height") {
+        task main;
+            codel<start> camgz_set_fmt(in w_val, out w, in h_val, out h, in hfov, out intrinsics)
+                yield ether;
+    };
+
+    activity set_disto(in sequence<double,5> dist_values) {
+        task main;
+
+        codel<start> camgz_set_disto(in dist_values, out intrinsics)
             yield ether;
     };
 };

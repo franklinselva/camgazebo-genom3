@@ -130,15 +130,8 @@ a|.Context
 '''
 
 [[disconnect]]
-=== disconnect (activity)
+=== disconnect (function)
 
-[role="small", width="50%", float="right", cols="1"]
-|===
-a|.Context
-[disc]
-  * In task `<<main>>`
-  (frequency 58.8235294117647 _Hz_)
-|===
 
 '''
 
@@ -160,14 +153,54 @@ a|.Context
 
 '''
 
-[[set_intrinsics]]
-=== set_intrinsics (activity)
+[[set_hfov]]
+=== set_hfov (activity)
 
 [role="small", width="50%", float="right", cols="1"]
 |===
 a|.Inputs
 [disc]
- * `sequence< double, 10 >` `int_values`
+ * `float` `hfov_val` (default `"1.047"`) Camera horizon FOV (in radians)
+
+a|.Context
+[disc]
+  * In task `<<main>>`
+  (frequency 58.8235294117647 _Hz_)
+  * Updates port `<<intrinsics>>`
+|===
+
+'''
+
+[[set_format]]
+=== set_format (activity)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `unsigned short` `w_val` (default `"1920"`) Camera pixel width
+
+ * `unsigned short` `h_val` (default `"1080"`) Camera pixel height
+
+ * `unsigned short` `bpp_val` (default `"3"`) Byte par pixel (1 or 3)
+
+a|.Context
+[disc]
+  * In task `<<main>>`
+  (frequency 58.8235294117647 _Hz_)
+  * Updates port `<<intrinsics>>`
+|===
+
+'''
+
+[[set_disto]]
+=== set_disto (activity)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `sequence< double, 5 >` `dist_values`
 
 a|.Context
 [disc]
@@ -187,21 +220,9 @@ a|.Context
 |===
 a|.Context
 [disc]
-  * Free running
-* Updates port `<<extrinsics>>`
-|===
-
-'''
-
-[[publish]]
-=== publish
-
-[role="small", width="50%", float="right", cols="1"]
-|===
-a|.Context
-[disc]
   * Frequency 58.8235294117647 _Hz_
 * Updates port `<<frame>>`
+* Updates port `<<intrinsics>>`
 * Updates port `<<extrinsics>>`
 |===
 
