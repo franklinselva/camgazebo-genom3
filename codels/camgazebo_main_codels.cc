@@ -27,21 +27,26 @@
 
 #include "codels.hpp"
 #include <iostream>
-#include <err.h>
+#include <mutex>
 
 using std::cout;
 using std::endl;
 
 /* --- Global variables ------------------------------------------------- */
 or_camera_data* cgz_data;
+std::mutex mut;
 
 /* --- Callback --------------------------------------------------------- */
 void camgz_cb(ConstImageStampedPtr& _msg)
 {
+    //data.length == width * step ??
     if (_msg->image().data().length() != cgz_data->l)
         warnx("Skipping frame, incorrect size");
     else
+    {
+        std::lock_guard<std::mutex> guard(mut);
         memcpy(cgz_data->data, _msg->image().data().c_str(), _msg->image().data().length());
+    }
 }
 
 /* --- Calib ------------------------------------------------------------ */
@@ -135,6 +140,8 @@ camgz_pub(uint16_t h, uint16_t w, const camgazebo_frame *frame,
     fdata->width = w;
     fdata->bpp = 3;
     fdata->pixels._length = cgz_data->l;
+
+    std::lock_guard<std::mutex> guard(mut);
     memcpy(fdata->pixels._buffer, cgz_data->data, cgz_data->l);
 
     *(frame->data(self)) = *fdata;
@@ -158,6 +165,8 @@ camgz_connect(const char world[64], const char model[64],
               const camgazebo_intrinsics *intrinsics, bool *started,
               const genom_context self)
 {
+    std::lock_guard<std::mutex> guard(mut);
+
     gazebo::client::setup();
     (*pipe)->node = gazebo::transport::NodePtr(new gazebo::transport::Node());
     (*pipe)->node->Init();
@@ -166,8 +175,26 @@ camgz_connect(const char world[64], const char model[64],
     snprintf(topic, 256, "/gazebo/%s/%s/%s/%s/image", world, model, link, sensor);
     (*pipe)->sub = (*pipe)->node->Subscribe(topic, camgz_cb);
 
-    cout << "camgazebo: connected to " << topic << endl;
+    warnx("connected to %s", topic);
     *started = true;
+
+    return camgazebo_ether;
+}
+
+
+/* --- Activity disconnect ---------------------------------------------- */
+
+/** Codel camgz_disconnect of activity disconnect.
+ *
+ * Triggered by camgazebo_start.
+ * Yields to camgazebo_ether.
+ */
+genom_event
+camgz_disconnect(bool *started, const genom_context self)
+{
+    std::lock_guard<std::mutex> guard(mut);
+    gazebo::client::shutdown();
+    *started = false;
 
     return camgazebo_ether;
 }
@@ -185,7 +212,6 @@ camgz_set_extrinsics(const sequence6_double *ext_values,
                      const camgazebo_extrinsics *extrinsics,
                      const genom_context self)
 {
-    cout << "camgazebo: new extrinsic calibration: ";
     or_sensor_extrinsics ext;
     ext = {ext_values->_buffer[0],
            ext_values->_buffer[1],
@@ -196,12 +222,6 @@ camgz_set_extrinsics(const sequence6_double *ext_values,
 
     *extrinsics->data(self) = ext;
     extrinsics->write(self);
-    cout << extrinsics->data(self)->tx << " " <<
-            extrinsics->data(self)->ty << " " <<
-            extrinsics->data(self)->tz << " " <<
-            extrinsics->data(self)->roll << " " <<
-            extrinsics->data(self)->pitch << " " <<
-            extrinsics->data(self)->yaw << endl;
 
     return camgazebo_ether;
 }

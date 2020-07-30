@@ -26,31 +26,3 @@
 #include "camgazebo_c_types.h"
 
 #include "codels.hpp"
-
-/* --- Function disconnect ---------------------------------------------- */
-
-/** Codel camgz_disconnect of function disconnect.
- *
- * Returns genom_ok.
- */
-genom_event
-camgz_disconnect(bool *started, const genom_context self)
-{
-    gazebo::client::shutdown();
-    *started = false;
-    return genom_ok;
-}
-
-
-/* --- Function stop_record --------------------------------------------- */
-
-/** Codel camgz_stop_record of function stop_record.
- *
- * Returns genom_ok.
- */
-genom_event
-camgz_stop_record(const genom_context self)
-{
-  /* skeleton sample: insert your code */
-  /* skeleton sample */ return genom_ok;
-}

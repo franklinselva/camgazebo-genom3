@@ -79,8 +79,10 @@ component camgazebo {
             yield ether;
     };
 
-    function disconnect() {
-        codel camgz_disconnect(out info.started);
+    activity disconnect() {
+        task main;
+        codel<start> camgz_disconnect(out info.started)
+            yield ether;
     };
 
     /* ---- Display/Record ------------------------------------------------ */

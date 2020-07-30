@@ -130,8 +130,15 @@ a|.Context
 '''
 
 [[disconnect]]
-=== disconnect (function)
+=== disconnect (activity)
 
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Context
+[disc]
+  * In task `<<main>>`
+  (frequency 58.8235294117647 _Hz_)
+|===
 
 '''
 

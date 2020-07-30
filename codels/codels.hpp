@@ -29,6 +29,8 @@
 #include <gazebo/msgs/msgs.hh>
 #include <gazebo/gazebo_client.hh>
 
+#include <err.h>
+
 struct or_camera_pipe {
     gazebo::transport::NodePtr node;
     gazebo::transport::SubscriberPtr sub;
