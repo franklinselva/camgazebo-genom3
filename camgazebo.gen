@@ -46,6 +46,7 @@ component camgazebo {
 
         or_camera::info info;
         or_camera::pipe pipe;
+        or_camera::data data;
 
         float hfov;
         unsigned short w;
@@ -60,10 +61,10 @@ component camgazebo {
         codel<start> camgz_start(out ::ids, out frame, out extrinsics, out intrinsics)
             yield wait;
 
-        codel<wait> camgz_wait(in info.started)
+        codel<wait> camgz_wait(in info.started, in data)
             yield pause::wait, pub;
 
-        codel<pub> camgz_pub(in h, in w, out frame)
+        codel<pub> camgz_pub(inout data, out frame)
             yield pause::wait;
     };
 
@@ -75,13 +76,13 @@ component camgazebo {
                      in string<64> sensor = : "name of the gazebo sensor") {
         task main;
 
-        codel<start> camgz_connect(in world, in model, in link, in sensor, out pipe, out intrinsics, out info.started)
+        codel<start> camgz_connect(in world, in model, in link, in sensor, out data, out pipe, out intrinsics, out info.started)
             yield ether;
     };
 
     activity disconnect() {
         task main;
-        codel<start> camgz_disconnect(out info.started)
+        codel<start> camgz_disconnect(out data, out pipe, out info.started)
             yield ether;
     };
 
@@ -140,7 +141,7 @@ component camgazebo {
     activity set_format(in unsigned short w_val = 1920 : "Camera pixel width",
                         in unsigned short h_val = 1080 : "Camera pixel height") {
         task main;
-            codel<start> camgz_set_fmt(in w_val, out w, in h_val, out h, in hfov, out intrinsics)
+            codel<start> camgz_set_fmt(in w_val, out w, in h_val, out data, out h, in hfov, out intrinsics)
                 yield ether;
     };
 

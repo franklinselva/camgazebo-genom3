@@ -29,7 +29,12 @@
 #include <gazebo/msgs/msgs.hh>
 #include <gazebo/gazebo_client.hh>
 
+#include <iostream>
 #include <err.h>
+#include <mutex>
+
+using std::cout;
+using std::endl;
 
 struct or_camera_pipe {
     gazebo::transport::NodePtr node;
@@ -37,6 +42,35 @@ struct or_camera_pipe {
 };
 
 struct or_camera_data {
-    uint64_t l = 1920 * 1080 * 3;
-    uint8_t* data = new uint8_t[l];
+    uint64_t l;
+    uint8_t* data;
+    bool is_empty;
+    std::mutex lock;
+
+    or_camera_data(uint16_t w, uint16_t h)
+    {
+        this->l = h * w * 3;
+        this->data = new uint8_t[l];
+        this->is_empty = true;
+    }
+
+    void set_size(uint16_t w, uint16_t h)
+    {
+        this->l = h * w * 3;
+        this->data = new uint8_t[l];
+        this->is_empty = true;
+    }
+
+    void cb(ConstImageStampedPtr &_msg)
+    {
+        std::lock_guard<std::mutex> guard(this->lock);
+
+        if (_msg->image().data().length() != this->l)
+            warnx("Skipping frame, incorrect size");
+        else
+        {
+            memcpy(this->data, _msg->image().data().c_str(), _msg->image().data().length());
+            this->is_empty = false;
+        }
+    }
 };

@@ -26,30 +26,8 @@
 #include "camgazebo_c_types.h"
 
 #include "codels.hpp"
-#include <iostream>
-#include <mutex>
 
-using std::cout;
-using std::endl;
-
-/* --- Global variables ------------------------------------------------- */
-or_camera_data* cgz_data;
-std::mutex mut;
-
-/* --- Callback --------------------------------------------------------- */
-void camgz_cb(ConstImageStampedPtr& _msg)
-{
-    //data.length == width * step ??
-    if (_msg->image().data().length() != cgz_data->l)
-        warnx("Skipping frame, incorrect size");
-    else
-    {
-        std::lock_guard<std::mutex> guard(mut);
-        memcpy(cgz_data->data, _msg->image().data().c_str(), _msg->image().data().length());
-    }
-}
-
-/* --- Calib ------------------------------------------------------------ */
+/* --- Calib helper  ------------------------------------------------------ */
 void compute_calib(or_sensor_intrinsics* intr, double hfov, uint16_t w, uint16_t h)
 {
     double vfov = hfov*h/w;
@@ -60,6 +38,7 @@ void compute_calib(or_sensor_intrinsics* intr, double hfov, uint16_t w, uint16_t
     intr->calib._buffer[3] = w/2;
     intr->calib._buffer[4] = h/2;
 }
+
 
 /* --- Task main -------------------------------------------------------- */
 
@@ -75,17 +54,27 @@ camgz_start(camgazebo_ids *ids, const camgazebo_frame *frame,
             const camgazebo_intrinsics *intrinsics,
             const genom_context self)
 {
-    cgz_data = new or_camera_data();
-
-    ids->pipe = new or_camera_pipe();
     ids->info.started = false;
     ids->hfov = 1.047;
     ids->w = 1920;
     ids->h = 1080;
+    ids->data = new or_camera_data(ids->w, ids->h);
+    ids->pipe = new or_camera_pipe();
 
     // Init values for extrinsics
     *extrinsics->data(self) = {0,0,0, 0,0,0};
     extrinsics->write(self);
+
+    if (genom_sequence_reserve(&(frame->data(self)->pixels), ids->data->l) == -1) {
+        camgazebo_e_mem_detail d;
+        snprintf(d.what, sizeof(d.what), "unable to allocate frame memory");
+        warnx("%s", d.what);
+        return camgazebo_e_mem(&d,self);
+    }
+    frame->data(self)->pixels._length = 0;
+    frame->data(self)->height = ids->h;
+    frame->data(self)->width = ids->w;
+    frame->data(self)->bpp = 3;
 
     // Init values for intrinsics
     or_sensor_intrinsics* intr = intrinsics->data(self);
@@ -109,9 +98,10 @@ camgz_start(camgazebo_ids *ids, const camgazebo_frame *frame,
  * Yields to camgazebo_pause_wait, camgazebo_pub.
  */
 genom_event
-camgz_wait(bool started, const genom_context self)
+camgz_wait(bool started, const or_camera_data *data,
+           const genom_context self)
 {
-    if (started)
+    if (started && !data->is_empty)
         return camgazebo_pub;
     else
         return camgazebo_pause_wait;
@@ -124,25 +114,14 @@ camgz_wait(bool started, const genom_context self)
  * Yields to camgazebo_pause_wait.
  */
 genom_event
-camgz_pub(uint16_t h, uint16_t w, const camgazebo_frame *frame,
+camgz_pub(or_camera_data **data, const camgazebo_frame *frame,
           const genom_context self)
 {
     or_sensor_frame* fdata = frame->data(self);
 
-    if (cgz_data->l > fdata->pixels._maximum)
-        if (genom_sequence_reserve(&(fdata->pixels), cgz_data->l) == -1) {
-            camgazebo_e_mem_detail d;
-            snprintf(d.what, sizeof(d.what), "unable to allocate frame memory");
-            printf("camgazebo: %s\n", d.what);
-            return camgazebo_e_mem(&d,self);
-        }
-    fdata->height = h;
-    fdata->width = w;
-    fdata->bpp = 3;
-    fdata->pixels._length = cgz_data->l;
-
-    std::lock_guard<std::mutex> guard(mut);
-    memcpy(fdata->pixels._buffer, cgz_data->data, cgz_data->l);
+    std::lock_guard<std::mutex> guard((*data)->lock);
+    memcpy(fdata->pixels._buffer, (*data)->data, (*data)->l);
+    fdata->pixels._length = (*data)->l;
 
     *(frame->data(self)) = *fdata;
     frame->write(self);
@@ -161,22 +140,25 @@ camgz_pub(uint16_t h, uint16_t w, const camgazebo_frame *frame,
 genom_event
 camgz_connect(const char world[64], const char model[64],
               const char link[64], const char sensor[64],
-              or_camera_pipe **pipe,
+              or_camera_data **data, or_camera_pipe **pipe,
               const camgazebo_intrinsics *intrinsics, bool *started,
               const genom_context self)
 {
-    std::lock_guard<std::mutex> guard(mut);
+    if (*started)
+        warnx("already connected to gazebo, disconnect() first");
+    else
+    {
+        gazebo::client::setup();
+        (*pipe)->node = gazebo::transport::NodePtr(new gazebo::transport::Node());
+        (*pipe)->node->Init();
 
-    gazebo::client::setup();
-    (*pipe)->node = gazebo::transport::NodePtr(new gazebo::transport::Node());
-    (*pipe)->node->Init();
+        char* topic = new char[256];
+        snprintf(topic, 256, "/gazebo/%s/%s/%s/%s/image", world, model, link, sensor);
+        (*pipe)->sub = (*pipe)->node->Subscribe(topic, &or_camera_data::cb, *data);
 
-    char* topic = new char[256];
-    snprintf(topic, 256, "/gazebo/%s/%s/%s/%s/image", world, model, link, sensor);
-    (*pipe)->sub = (*pipe)->node->Subscribe(topic, camgz_cb);
-
-    warnx("connected to %s", topic);
-    *started = true;
+        warnx("connected to %s", topic);
+        *started = true;
+    }
 
     return camgazebo_ether;
 }
@@ -190,10 +172,17 @@ camgz_connect(const char world[64], const char model[64],
  * Yields to camgazebo_ether.
  */
 genom_event
-camgz_disconnect(bool *started, const genom_context self)
+camgz_disconnect(or_camera_data **data, or_camera_pipe **pipe,
+                 bool *started, const genom_context self)
 {
-    std::lock_guard<std::mutex> guard(mut);
+    std::lock_guard<std::mutex> guard((*data)->lock);
+
     gazebo::client::shutdown();
+    // (*pipe)->node->Fini();
+    // (*pipe)->sub->Unsubscribe();
+    // (*pipe)->node = NULL;
+    // (*pipe)->sub = NULL;
+
     *started = false;
 
     return camgazebo_ether;
@@ -258,14 +247,15 @@ camgz_set_hfov(float hfov_val, float *hfov, uint16_t h, uint16_t w,
  * Yields to camgazebo_ether.
  */
 genom_event
-camgz_set_fmt(uint16_t w_val, uint16_t *w, uint16_t h_val, uint16_t *h,
-              float hfov, const camgazebo_intrinsics *intrinsics,
+camgz_set_fmt(uint16_t w_val, uint16_t *w, uint16_t h_val,
+              or_camera_data **data, uint16_t *h, float hfov,
+              const camgazebo_intrinsics *intrinsics,
               const genom_context self)
 {
     *w = w_val;
     *h = h_val;
 
-    cgz_data->l = *h * *w * 3;
+    (*data)->set_size(w_val, h_val);
 
     or_sensor_intrinsics* intr = intrinsics->data(self);
     compute_calib(intr, hfov, *w, *h);
