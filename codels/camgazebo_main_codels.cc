@@ -33,7 +33,8 @@ void compute_calib(or_sensor_intrinsics* intr, double hfov, uint16_t w, uint16_t
     double vfov = hfov*h/w;
 
     intr->calib._buffer[0] = w/2/tan(hfov/2);
-    intr->calib._buffer[1] = h/2/tan(vfov/2);
+    intr->calib._buffer[1] = w/2/tan(hfov/2);
+    // intr->calib._buffer[1] = h/2/tan(vfov/2);
     intr->calib._buffer[2] = 0;
     intr->calib._buffer[3] = w/2;
     intr->calib._buffer[4] = h/2;
