@@ -27,6 +27,10 @@
 
 #include "codels.hpp"
 
+#include <opencv2/opencv.hpp>
+
+using namespace cv;
+
 /* --- Calib helper  ------------------------------------------------------ */
 void compute_calib(or_sensor_intrinsics* intr, double hfov, uint16_t w, uint16_t h)
 {
@@ -186,6 +190,53 @@ camgz_disconnect(or_camera_data **data, or_camera_pipe **pipe,
 
     *started = false;
 
+    return camgazebo_ether;
+}
+
+
+/* --- Activity display_start ------------------------------------------- */
+
+/** Codel camgz_disp_start of activity display_start.
+ *
+ * Triggered by camgazebo_start.
+ * Yields to camgazebo_disp, camgazebo_ether.
+ */
+genom_event
+camgz_disp_start(bool started, const genom_context self)
+{
+    if (!started)
+        return camgazebo_ether;
+    else
+        namedWindow("camgazebo-genom3", WINDOW_NORMAL);
+        return camgazebo_disp;
+}
+
+/** Codel camgz_disp of activity display_start.
+ *
+ * Triggered by camgazebo_disp.
+ * Yields to camgazebo_pause_disp.
+ */
+genom_event
+camgz_disp(const or_camera_data *data, uint16_t h, uint16_t w,
+           const genom_context self)
+{
+    Mat frame = Mat(Size(w, h), CV_8UC3, (void*)data->data, Mat::AUTO_STEP);
+    imshow("camgazebo-genom3", frame);
+    resizeWindow("camgazebo-genom3", 480, 270);
+    waitKey(1);
+
+    return camgazebo_pause_disp;
+}
+
+/** Codel camgz_disp_stop of activity display_start.
+ *
+ * Triggered by camgazebo_stop.
+ * Yields to camgazebo_ether.
+ */
+genom_event
+camgz_disp_stop(const genom_context self)
+{
+    destroyWindow("camgazebo-genom3");
     return camgazebo_ether;
 }
 

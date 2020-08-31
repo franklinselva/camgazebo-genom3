@@ -34,16 +34,13 @@ component camgazebo {
     email           "martin.jacquet@laas.fr";
     lang			"c";
     require         "genom3 >= 2.99.26";
-    codels-require  "gazebo";
+    codels-require  "gazebo", "opencv";
 
     provides or_camera;
 
     exception e_mem { string<128> what; };
 
     ids {
-        boolean record;
-        boolean display;
-
         or_camera::info info;
         or_camera::pipe pipe;
         or_camera::data data;
@@ -86,25 +83,26 @@ component camgazebo {
             yield ether;
     };
 
+    /* ---- Display ------------------------------------------------------- */
+    activity display_start() {
+        task main;
+
+        codel<start> camgz_disp_start(in info.started)
+            yield disp, ether;
+
+        codel<disp> camgz_disp(in data, in h, in w)
+            yield pause::disp;
+
+        codel<stop> camgz_disp_stop()
+            yield ether;
+    };
+
+    function display_stop() {
+        interrupt display_start;
+    };
+
     /* ---- Display/Record ------------------------------------------------ */
 
-    // activity display() {
-    //     task publish;
-    //
-    //     codel<start> camgz_disp_start()
-    //         yield disp;
-    //
-    //     codel<disp> camgz_disp()
-    //         yield pause::disp, stop;
-    //
-    //     codel<stop> camgz_disp_stop()
-    //         yield ether;
-    // };
-    //
-    // function stop_display() {
-    //     codel camgz_stop_display();
-    // };
-    //
     // activity record(in string<64> path = "/tmp/": "Video files path") {
     //     task publish;
     //

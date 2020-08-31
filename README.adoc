@@ -142,6 +142,31 @@ a|.Context
 
 '''
 
+[[display_start]]
+=== display_start (activity)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Context
+[disc]
+  * In task `<<main>>`
+  (frequency 58.8235294117647 _Hz_)
+|===
+
+'''
+
+[[display_stop]]
+=== display_stop (function)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Context
+[disc]
+  * Interrupts `<<display_start>>`
+|===
+
+'''
+
 [[set_extrinsics]]
 === set_extrinsics (activity)
 
