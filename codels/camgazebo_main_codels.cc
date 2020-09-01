@@ -220,7 +220,9 @@ genom_event
 camgz_disp(const or_camera_data *data, uint16_t h, uint16_t w,
            const genom_context self)
 {
-    Mat frame = Mat(Size(w, h), CV_8UC3, (void*)data->data, Mat::AUTO_STEP);
+    Mat frame;
+    Mat(Size(w, h), CV_8UC3, (void*)data->data, Mat::AUTO_STEP).copyTo(frame);
+    circle(frame, Point(w/2,h/2), h/2, Scalar(0,0,255), 2);
     imshow("camgazebo-genom3", frame);
     resizeWindow("camgazebo-genom3", 480, 270);
     waitKey(1);
