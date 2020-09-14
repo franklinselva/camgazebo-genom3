@@ -143,9 +143,8 @@ camgz_pub(or_camera_data **data, const camgazebo_frame *frame,
  * Yields to camgazebo_ether.
  */
 genom_event
-camgz_connect(const char world[64], const char model[64],
-              const char link[64], const char sensor[64],
-              or_camera_data **data, or_camera_pipe **pipe,
+camgz_connect(const char topic[256], or_camera_data **data,
+              or_camera_pipe **pipe,
               const camgazebo_intrinsics *intrinsics, bool *started,
               const genom_context self)
 {
@@ -157,8 +156,6 @@ camgz_connect(const char world[64], const char model[64],
         (*pipe)->node = gazebo::transport::NodePtr(new gazebo::transport::Node());
         (*pipe)->node->Init();
 
-        char* topic = new char[256];
-        snprintf(topic, 256, "/gazebo/%s/%s/%s/%s/image", world, model, link, sensor);
         (*pipe)->sub = (*pipe)->node->Subscribe(topic, &or_camera_data::cb, *data);
 
         warnx("connected to %s", topic);

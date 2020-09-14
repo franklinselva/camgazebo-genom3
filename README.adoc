@@ -112,13 +112,7 @@ a|.Data structure
 |===
 a|.Inputs
 [disc]
- * `string<64>` `world` name of gazebo world
-
- * `string<64>` `model` gazebo model containing the sensor
-
- * `string<64>` `link` gazebo link containing the sensor
-
- * `string<64>` `sensor` name of the gazebo sensor
+ * `string<256>` `topic` name of gazebo world
 
 a|.Context
 [disc]
@@ -138,6 +132,7 @@ a|.Context
 [disc]
   * In task `<<main>>`
   (frequency 58.8235294117647 _Hz_)
+  * Interrupts `<<display_start>>`
 |===
 
 '''
