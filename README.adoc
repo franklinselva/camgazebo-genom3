@@ -76,8 +76,18 @@ a|.Data structure
 a|.Data structure
 [disc]
  * `struct ::or::sensor::intrinsics` `intrinsics`
- ** `sequence< float, 5 >` `calib`
- ** `sequence< float, 5 >` `disto`
+ ** `struct ::or::sensor::calibration` `calib`
+ *** `float` `fx`
+ *** `float` `fy`
+ *** `float` `cx`
+ *** `float` `cy`
+ *** `float` `gammma`
+ ** `struct ::or::sensor::distortion` `disto`
+ *** `float` `k1`
+ *** `float` `k2`
+ *** `float` `k3`
+ *** `float` `p1`
+ *** `float` `p2`
 
 |===
 

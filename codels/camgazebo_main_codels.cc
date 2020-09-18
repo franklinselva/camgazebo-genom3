@@ -32,13 +32,15 @@
 using namespace cv;
 
 /* --- Calib helper  ------------------------------------------------------ */
-void compute_calib(or_sensor_intrinsics* intr, double hfov, uint16_t w, uint16_t h)
+void compute_calib(or_sensor_intrinsics* intr, float hfov, uint16_t w, uint16_t h)
 {
-    intr->calib._buffer[0] = w/2/tan(hfov/2);
-    intr->calib._buffer[1] = w/2/tan(hfov/2);
-    intr->calib._buffer[2] = 0;
-    intr->calib._buffer[3] = w/2;
-    intr->calib._buffer[4] = h/2;
+    intr->calib = {
+        w/2/tan(hfov/2),
+        w/2/tan(hfov/2),
+        0,
+        (float)w/2,
+        (float)h/2
+    };
 }
 
 
@@ -63,10 +65,6 @@ camgz_start(camgazebo_ids *ids, const camgazebo_frame *frame,
     ids->data = new or_camera_data(ids->w, ids->h);
     ids->pipe = new or_camera_pipe();
 
-    // Init values for extrinsics
-    *extrinsics->data(self) = {0,0,0, 0,0,2};
-    extrinsics->write(self);
-
     if (genom_sequence_reserve(&(frame->data(self)->pixels), ids->data->l) == -1) {
         camgazebo_e_mem_detail d;
         snprintf(d.what, sizeof(d.what), "unable to allocate frame memory");
@@ -78,17 +76,14 @@ camgz_start(camgazebo_ids *ids, const camgazebo_frame *frame,
     frame->data(self)->width = ids->w;
     frame->data(self)->bpp = 3;
 
-    // Init values for intrinsics
+    // Publish initial calibration
     or_sensor_intrinsics* intr = intrinsics->data(self);
     compute_calib(intr, ids->hfov, ids->w, ids->h);
-    intr->disto._buffer[0] = 0;
-    intr->disto._buffer[1] = 0;
-    intr->disto._buffer[2] = 0;
-    intr->disto._buffer[3] = 0;
-    intr->disto._buffer[4] = 0;
 
     *intrinsics->data(self) = *intr;
     intrinsics->write(self);
+
+    extrinsics->write(self);
 
     return camgazebo_wait;
 }
@@ -183,6 +178,8 @@ camgz_disconnect(or_camera_data **data, bool *started,
     gazebo::client::shutdown();
     *started = false;
 
+    warnx("disconnected from gazebo");
+
     return camgazebo_ether;
 }
 
@@ -253,8 +250,8 @@ camgz_set_extrinsics(const sequence6_float *ext_values,
                      const camgazebo_extrinsics *extrinsics,
                      const genom_context self)
 {
-    *extrinsics->data(self) =
-        {ext_values->_buffer[0],
+    *extrinsics->data(self) = {
+        ext_values->_buffer[0],
         ext_values->_buffer[1],
         ext_values->_buffer[2],
         ext_values->_buffer[3],
@@ -263,6 +260,8 @@ camgz_set_extrinsics(const sequence6_float *ext_values,
     };
 
     extrinsics->write(self);
+
+    warnx("new extrinsic calibration");
 
     return camgazebo_ether;
 }
@@ -286,6 +285,8 @@ camgz_set_hfov(float hfov_val, float *hfov, uint16_t h, uint16_t w,
     compute_calib(intr, *hfov, w, h);
     *intrinsics->data(self) = *intr;
     intrinsics->write(self);
+
+    warnx("new intrinsic calibration");
 
     return camgazebo_ether;
 }
@@ -314,6 +315,8 @@ camgz_set_fmt(uint16_t w_val, uint16_t *w, uint16_t h_val,
     *intrinsics->data(self) = *intr;
     intrinsics->write(self);
 
+    warnx("new intrinsic calibration");
+
     return camgazebo_ether;
 }
 
@@ -330,18 +333,17 @@ camgz_set_disto(const sequence5_float *dist_values,
                 const camgazebo_intrinsics *intrinsics,
                 const genom_context self)
 {
-    or_sensor_intrinsics* intr = intrinsics->data(self);
+    intrinsics->data(self)->disto = {
+        dist_values->_buffer[0],
+        dist_values->_buffer[1],
+        dist_values->_buffer[2],
+        dist_values->_buffer[3],
+        dist_values->_buffer[4]
+    };
 
-    intr->disto._buffer[0] = dist_values->_buffer[0];
-    intr->disto._buffer[1] = dist_values->_buffer[1];
-    intr->disto._buffer[2] = dist_values->_buffer[2];
-    intr->disto._buffer[3] = dist_values->_buffer[3];
-    intr->disto._buffer[4] = dist_values->_buffer[4];
-
-    *intrinsics->data(self) = *intr;
     intrinsics->write(self);
 
-    warnx("camgazebo: new distorsion parameters");
+    warnx("new intrinsic calibration");
 
     return camgazebo_ether;
 }

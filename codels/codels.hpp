@@ -52,10 +52,7 @@ struct or_camera_data {
 
     or_camera_data(uint16_t w, uint16_t h)
     {
-        this->l = h * w * 3;
-        this->data = new uint8_t[l];
-        this->is_new = false;
-        this->is_pub = false;
+        this->set_size(w, h);
     }
 
     void set_size(uint16_t w, uint16_t h)
