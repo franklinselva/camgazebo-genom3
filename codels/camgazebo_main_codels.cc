@@ -201,6 +201,7 @@ camgz_disp_start(bool started, const genom_context self)
         return camgazebo_ether;
     else
         namedWindow("camgazebo-genom3", WINDOW_NORMAL);
+        startWindowThread();
         resizeWindow("camgazebo-genom3", 480, 270);
         return camgazebo_disp;
 }
@@ -221,7 +222,6 @@ camgz_disp(or_camera_data **data, uint16_t h, uint16_t w,
         Mat frame = Mat(Size(w, h), CV_8UC3, (void*)(*data)->data, Mat::AUTO_STEP);
         circle(frame, Point(w/2,h/2), h/2, Scalar(0,0,255), 2);
         imshow("camgazebo-genom3", frame);
-        waitKey(1);
         (*data)->is_pub = false;
     }
 
