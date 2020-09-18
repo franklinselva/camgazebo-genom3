@@ -46,6 +46,7 @@ struct or_camera_data {
     uint8_t* data;
     bool is_empty;
     std::mutex lock;
+    int32_t sec, nsec;
 
     or_camera_data(uint16_t w, uint16_t h)
     {
@@ -70,6 +71,8 @@ struct or_camera_data {
         else
         {
             memcpy(this->data, _msg->image().data().c_str(), _msg->image().data().length());
+            this->sec = _msg->time().sec();
+            this->nsec = _msg->time().nsec();
             this->is_empty = false;
         }
     }

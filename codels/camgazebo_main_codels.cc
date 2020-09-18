@@ -124,6 +124,8 @@ camgz_pub(or_camera_data **data, const camgazebo_frame *frame,
     std::lock_guard<std::mutex> guard((*data)->lock);
     memcpy(fdata->pixels._buffer, (*data)->data, (*data)->l);
     fdata->pixels._length = (*data)->l;
+    fdata->ts.sec = (*data)->sec;
+    fdata->ts.nsec = (*data)->nsec;
 
     *(frame->data(self)) = *fdata;
     frame->write(self);
