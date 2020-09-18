@@ -88,7 +88,7 @@ genom_event
 camgz_wait(bool started, const or_camera_data *data,
            const genom_context self)
 {
-    if (!started || !(data->is_new))
+    if (!started || !(data->new_frame))
         return camgazebo_pause_wait;
     return camgazebo_pub;
 }
@@ -113,7 +113,7 @@ camgz_pub(or_camera_data **data, const camgazebo_frame *frame,
 
     frame->write(self);
 
-    (*data)->is_new = false;
+    (*data)->new_frame = false;
 
     return camgazebo_wait;
 }

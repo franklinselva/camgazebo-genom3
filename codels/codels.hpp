@@ -45,7 +45,7 @@ struct or_camera_pipe {
 struct or_camera_data {
     uint64_t l;
     uint8_t* data;
-    bool is_new;
+    bool new_frame;
     std::mutex lock;
     struct timeval tv;
 
@@ -58,7 +58,7 @@ struct or_camera_data {
     {
         this->l = h * w * 3;
         this->data = new uint8_t[l];
-        this->is_new = false;
+        this->new_frame = false;
     }
 
     void cb(ConstImageStampedPtr &_msg)
@@ -71,7 +71,7 @@ struct or_camera_data {
         {
             gettimeofday(&(this->tv), NULL);
             memcpy(this->data, _msg->image().data().c_str(), _msg->image().data().length());
-            this->is_new = true;
+            this->new_frame = true;
         }
     }
 };
