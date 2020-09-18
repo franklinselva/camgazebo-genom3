@@ -32,6 +32,7 @@
 #include <iostream>
 #include <err.h>
 #include <mutex>
+#include <sys/time.h>
 
 using std::cout;
 using std::endl;
@@ -47,7 +48,7 @@ struct or_camera_data {
     bool is_new;
     bool is_pub;
     std::mutex lock;
-    int32_t sec, nsec;
+    struct timeval tv;
 
     or_camera_data(uint16_t w, uint16_t h)
     {
@@ -73,9 +74,8 @@ struct or_camera_data {
             warnx("Skipping frame, incorrect size");
         else
         {
+            gettimeofday(&(this->tv), NULL);
             memcpy(this->data, _msg->image().data().c_str(), _msg->image().data().length());
-            this->sec = _msg->time().sec();
-            this->nsec = _msg->time().nsec();
             this->is_new = true;
             this->is_pub = false;
         }

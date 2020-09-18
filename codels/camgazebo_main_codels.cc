@@ -123,8 +123,8 @@ camgz_pub(or_camera_data **data, const camgazebo_frame *frame,
     std::lock_guard<std::mutex> guard((*data)->lock);
     memcpy(fdata->pixels._buffer, (*data)->data, (*data)->l);
     fdata->pixels._length = (*data)->l;
-    fdata->ts.sec = (*data)->sec;
-    fdata->ts.nsec = (*data)->nsec;
+    fdata->ts.sec = (*data)->tv.tv_sec;
+    fdata->ts.nsec = (*data)->tv.tv_usec * 1000;
 
     *(frame->data(self)) = *fdata;
     frame->write(self);
@@ -149,7 +149,11 @@ camgz_connect(const char topic[256], or_camera_data **data,
               const camgazebo_intrinsics *intrinsics, bool *started,
               const genom_context self)
 {
-    if (*started)
+    if (*started)    std::lock_guard<std::mutex> guard((*data)->lock);
+    memcpy(fdata->pixels._buffer, (*data)->data, (*data)->l);
+    fdata->pixels._length = (*data)->l;
+    fdata->ts.sec = (*data)->tv.tv_sec;
+    fdata->ts.nsec = (*data)->tv.tv_usec * 1000;
         warnx("already connected to gazebo, disconnect() first");
     else
     {
