@@ -106,11 +106,11 @@ camgz_pub(or_camera_data **data, const camgazebo_frame *frame,
     or_sensor_frame* fdata = frame->data(self);
 
     std::lock_guard<std::mutex> guard((*data)->lock);
-    memcpy(fdata->pixels._buffer, (*data)->data, (*data)->l);
+
+    fdata->pixels._buffer = (uint8_t*)(*data)->data;
     fdata->ts.sec = (*data)->tv.tv_sec;
     fdata->ts.nsec = (*data)->tv.tv_usec * 1000;
 
-    *(frame->data(self)) = *fdata;
     frame->write(self);
 
     (*data)->is_new = false;
