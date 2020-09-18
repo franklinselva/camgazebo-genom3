@@ -21,6 +21,9 @@
  *
  *                                                  Martin Jacquet - June 2020
  */
+#ifndef H_CAMGAZEBO_CODELS
+#define H_CAMGAZEBO_CODELS
+
 #include "accamgazebo.h"
 
 #include "camgazebo_c_types.h"
@@ -75,3 +78,5 @@ struct or_camera_data {
         }
     }
 };
+
+#endif /* H_CAMGAZEBO_CODELS */
