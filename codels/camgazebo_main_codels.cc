@@ -114,7 +114,6 @@ camgz_pub(or_camera_data **data, const camgazebo_frame *frame,
     frame->write(self);
 
     (*data)->is_new = false;
-    (*data)->is_pub = true;
 
     return camgazebo_wait;
 }
