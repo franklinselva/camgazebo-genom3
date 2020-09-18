@@ -50,10 +50,8 @@ component camgazebo {
         unsigned short h;
     };
 
-    const unsigned short pub_period_ms = 17;
-
     task main {
-        period pub_period_ms ms;
+        period 1 ms;
 
         codel<start> camgz_start(out ::ids, out frame, out extrinsics, out intrinsics)
             yield wait;
@@ -62,11 +60,10 @@ component camgazebo {
             yield pause::wait, pub;
 
         codel<pub> camgz_pub(inout data, out frame)
-            yield pause::wait;
+            yield wait;
     };
 
     /* ---- Hardware connection ------------------------------------------- */
-
     activity connect(in string<256> topic = : "name of gazebo world") {
         task main;
 
@@ -100,7 +97,6 @@ component camgazebo {
     };
 
     /* ---- Display/Record ------------------------------------------------ */
-
     // activity record(in string<64> path = "/tmp/": "Video files path") {
     //     task publish;
     //
@@ -119,7 +115,6 @@ component camgazebo {
     // };
 
     /* ---- Calibration --------------------------------------------------- */
-
     activity set_extrinsics(in sequence<double,6> ext_values) {
         task main;
 

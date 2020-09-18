@@ -44,7 +44,8 @@ struct or_camera_pipe {
 struct or_camera_data {
     uint64_t l;
     uint8_t* data;
-    bool is_empty;
+    bool is_new;
+    bool is_pub;
     std::mutex lock;
     int32_t sec, nsec;
 
@@ -52,14 +53,16 @@ struct or_camera_data {
     {
         this->l = h * w * 3;
         this->data = new uint8_t[l];
-        this->is_empty = true;
+        this->is_new = false;
+        this->is_pub = false;
     }
 
     void set_size(uint16_t w, uint16_t h)
     {
         this->l = h * w * 3;
         this->data = new uint8_t[l];
-        this->is_empty = true;
+        this->is_new = false;
+        this->is_pub = false;
     }
 
     void cb(ConstImageStampedPtr &_msg)
@@ -73,7 +76,8 @@ struct or_camera_data {
             memcpy(this->data, _msg->image().data().c_str(), _msg->image().data().length());
             this->sec = _msg->time().sec();
             this->nsec = _msg->time().nsec();
-            this->is_empty = false;
+            this->is_new = true;
+            this->is_pub = false;
         }
     }
 };

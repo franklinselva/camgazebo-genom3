@@ -117,7 +117,7 @@ a|.Inputs
 a|.Context
 [disc]
   * In task `<<main>>`
-  (frequency 58.8235294117647 _Hz_)
+  (frequency 1000.0 _Hz_)
   * Updates port `<<intrinsics>>`
 |===
 
@@ -131,7 +131,7 @@ a|.Context
 a|.Context
 [disc]
   * In task `<<main>>`
-  (frequency 58.8235294117647 _Hz_)
+  (frequency 1000.0 _Hz_)
   * Interrupts `<<display_start>>`
 |===
 
@@ -145,7 +145,7 @@ a|.Context
 a|.Context
 [disc]
   * In task `<<main>>`
-  (frequency 58.8235294117647 _Hz_)
+  (frequency 1000.0 _Hz_)
 |===
 
 '''
@@ -174,7 +174,7 @@ a|.Inputs
 a|.Context
 [disc]
   * In task `<<main>>`
-  (frequency 58.8235294117647 _Hz_)
+  (frequency 1000.0 _Hz_)
   * Updates port `<<extrinsics>>`
 |===
 
@@ -192,7 +192,7 @@ a|.Inputs
 a|.Context
 [disc]
   * In task `<<main>>`
-  (frequency 58.8235294117647 _Hz_)
+  (frequency 1000.0 _Hz_)
   * Updates port `<<intrinsics>>`
 |===
 
@@ -214,7 +214,7 @@ a|.Inputs
 a|.Context
 [disc]
   * In task `<<main>>`
-  (frequency 58.8235294117647 _Hz_)
+  (frequency 1000.0 _Hz_)
   * Updates port `<<intrinsics>>`
 |===
 
@@ -232,7 +232,7 @@ a|.Inputs
 a|.Context
 [disc]
   * In task `<<main>>`
-  (frequency 58.8235294117647 _Hz_)
+  (frequency 1000.0 _Hz_)
   * Updates port `<<intrinsics>>`
 |===
 
@@ -247,7 +247,7 @@ a|.Context
 |===
 a|.Context
 [disc]
-  * Frequency 58.8235294117647 _Hz_
+  * Frequency 1000.0 _Hz_
 * Updates port `<<frame>>`
 * Updates port `<<intrinsics>>`
 * Updates port `<<extrinsics>>`

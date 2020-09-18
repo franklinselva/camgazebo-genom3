@@ -103,17 +103,16 @@ genom_event
 camgz_wait(bool started, const or_camera_data *data,
            const genom_context self)
 {
-    if (started && !data->is_empty)
-        return camgazebo_pub;
-    else
+    if (!started || !(data->is_new))
         return camgazebo_pause_wait;
+    return camgazebo_pub;
 }
 
 
 /** Codel camgz_pub of task main.
  *
  * Triggered by camgazebo_pub.
- * Yields to camgazebo_pause_wait.
+ * Yields to camgazebo_wait.
  */
 genom_event
 camgz_pub(or_camera_data **data, const camgazebo_frame *frame,
@@ -130,7 +129,10 @@ camgz_pub(or_camera_data **data, const camgazebo_frame *frame,
     *(frame->data(self)) = *fdata;
     frame->write(self);
 
-    return camgazebo_pause_wait;
+    (*data)->is_new = false;
+    (*data)->is_pub = true;
+
+    return camgazebo_wait;
 }
 
 
@@ -212,12 +214,16 @@ genom_event
 camgz_disp(or_camera_data **data, uint16_t h, uint16_t w,
            const genom_context self)
 {
-    std::lock_guard<std::mutex> guard((*data)->lock);
+    if ((*data)->is_pub)
+    {
+        std::lock_guard<std::mutex> guard((*data)->lock);
 
-    Mat frame = Mat(Size(w, h), CV_8UC3, (void*)(*data)->data, Mat::AUTO_STEP);
-    circle(frame, Point(w/2,h/2), h/2, Scalar(0,0,255), 2);
-    imshow("camgazebo-genom3", frame);
-    waitKey(1);
+        Mat frame = Mat(Size(w, h), CV_8UC3, (void*)(*data)->data, Mat::AUTO_STEP);
+        circle(frame, Point(w/2,h/2), h/2, Scalar(0,0,255), 2);
+        imshow("camgazebo-genom3", frame);
+        waitKey(1);
+        (*data)->is_pub = false;
+    }
 
     return camgazebo_pause_disp;
 }
