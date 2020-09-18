@@ -227,6 +227,7 @@ a|.Context
 [disc]
   * In task `<<main>>`
   (frequency 1000.0 _Hz_)
+  * Updates port `<<frame>>`
   * Updates port `<<intrinsics>>`
 |===
 

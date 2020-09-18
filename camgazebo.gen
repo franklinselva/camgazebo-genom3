@@ -45,8 +45,10 @@ component camgazebo {
         or_camera::data data;
 
         float hfov;
-        unsigned short w;
-        unsigned short h;
+        struct img_size {
+            unsigned short w;
+            unsigned short h;
+        } size;
     };
 
     task main {
@@ -84,7 +86,7 @@ component camgazebo {
         codel<start> camgz_disp_start(in info.started)
             yield disp, ether;
 
-        codel<disp> camgz_disp(inout data, in h, in w)
+        codel<disp> camgz_disp(inout data, in size)
             yield pause::disp;
 
         codel<stop> camgz_disp_stop()
@@ -124,14 +126,14 @@ component camgazebo {
     activity set_hfov(in float hfov_val = 1.047 : "Camera horizon FOV (in radians)") {
         task main;
 
-        codel<start> camgz_set_hfov(in hfov_val, out hfov, in h, in w, out intrinsics)
+        codel<start> camgz_set_hfov(in hfov_val, out hfov, in size, out intrinsics)
             yield ether;
     };
 
     activity set_format(in unsigned short w_val = 1920 : "Camera pixel width",
                         in unsigned short h_val = 1080 : "Camera pixel height") {
         task main;
-            codel<start> camgz_set_fmt(in w_val, out w, in h_val, out data, out h, in hfov, out intrinsics)
+            codel<start> camgz_set_fmt(in w_val, in h_val, out data, in hfov, out size, out frame, out intrinsics)
                 yield ether;
     };
 
