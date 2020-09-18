@@ -64,7 +64,7 @@ camgz_start(camgazebo_ids *ids, const camgazebo_frame *frame,
     ids->pipe = new or_camera_pipe();
 
     // Init values for extrinsics
-    *extrinsics->data(self) = {0,0,0, 0,0,0};
+    *extrinsics->data(self) = {0,0,0, 0,0,2};
     extrinsics->write(self);
 
     if (genom_sequence_reserve(&(frame->data(self)->pixels), ids->data->l) == -1) {
@@ -149,11 +149,7 @@ camgz_connect(const char topic[256], or_camera_data **data,
               const camgazebo_intrinsics *intrinsics, bool *started,
               const genom_context self)
 {
-    if (*started)    std::lock_guard<std::mutex> guard((*data)->lock);
-    memcpy(fdata->pixels._buffer, (*data)->data, (*data)->l);
-    fdata->pixels._length = (*data)->l;
-    fdata->ts.sec = (*data)->tv.tv_sec;
-    fdata->ts.nsec = (*data)->tv.tv_usec * 1000;
+    if (*started)
         warnx("already connected to gazebo, disconnect() first");
     else
     {
@@ -253,19 +249,19 @@ camgz_disp_stop(const genom_context self)
  * Yields to camgazebo_ether.
  */
 genom_event
-camgz_set_extrinsics(const sequence6_double *ext_values,
+camgz_set_extrinsics(const sequence6_float *ext_values,
                      const camgazebo_extrinsics *extrinsics,
                      const genom_context self)
 {
-    or_sensor_extrinsics ext;
-    ext = {ext_values->_buffer[0],
-           ext_values->_buffer[1],
-           ext_values->_buffer[2],
-           ext_values->_buffer[3],
-           ext_values->_buffer[4],
-           ext_values->_buffer[5]};
+    *extrinsics->data(self) =
+        {ext_values->_buffer[0],
+        ext_values->_buffer[1],
+        ext_values->_buffer[2],
+        ext_values->_buffer[3],
+        ext_values->_buffer[4],
+        ext_values->_buffer[5]
+    };
 
-    *extrinsics->data(self) = ext;
     extrinsics->write(self);
 
     return camgazebo_ether;
@@ -330,7 +326,7 @@ camgz_set_fmt(uint16_t w_val, uint16_t *w, uint16_t h_val,
  * Yields to camgazebo_ether.
  */
 genom_event
-camgz_set_disto(const sequence5_double *dist_values,
+camgz_set_disto(const sequence5_float *dist_values,
                 const camgazebo_intrinsics *intrinsics,
                 const genom_context self)
 {

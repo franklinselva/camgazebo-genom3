@@ -25,7 +25,7 @@ ACLOCAL_AMFLAGS=	-I autoconf
 
 # IDL source files
 idldir=		$(datadir)/idl/camgazebo
-nobase_dist_idl_DATA= camgazebo.gen camera.gen image.idl
+nobase_dist_idl_DATA= camgazebo.gen
 
 pkgconfigdir=	$(libdir)/pkgconfig
 pkgconfig_DATA=

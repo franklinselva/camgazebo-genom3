@@ -92,12 +92,14 @@ a|.Data structure
 a|.Data structure
 [disc]
  * `struct ::or::sensor::extrinsics` `extrinsics`
- ** `double` `tx`
- ** `double` `ty`
- ** `double` `tz`
- ** `double` `roll`
- ** `double` `pitch`
- ** `double` `yaw`
+ ** `struct ::or::sensor::rotation` `rot`
+ *** `float` `roll`
+ *** `float` `pitch`
+ *** `float` `yaw`
+ ** `struct ::or::sensor::translation` `trans`
+ *** `float` `tx`
+ *** `float` `ty`
+ *** `float` `tz`
 
 |===
 
@@ -169,7 +171,7 @@ a|.Context
 |===
 a|.Inputs
 [disc]
- * `sequence< double, 6 >` `ext_values`
+ * `sequence< float, 6 >` `ext_values`
 
 a|.Context
 [disc]
@@ -227,7 +229,7 @@ a|.Context
 |===
 a|.Inputs
 [disc]
- * `sequence< double, 5 >` `dist_values`
+ * `sequence< float, 5 >` `dist_values`
 
 a|.Context
 [disc]

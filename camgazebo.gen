@@ -23,10 +23,9 @@
  */
 /* ---- Includes ---------------------------------------------------------- */
 #pragma require "openrobots2-idl >= 2.0"
+#pragma require "vision-idl"
 
-#include "or/time/time.idl"
-// #include "or/sensor/camera.gen"
-#include "camera.gen"
+#include "or/sensor/camera.gen"
 
 /* ---- Component declaration --------------------------------------------- */
 component camgazebo {
@@ -115,7 +114,7 @@ component camgazebo {
     // };
 
     /* ---- Calibration --------------------------------------------------- */
-    activity set_extrinsics(in sequence<double,6> ext_values) {
+    activity set_extrinsics(in sequence<float,6> ext_values) {
         task main;
 
         codel<start> camgz_set_extrinsics(in ext_values, out extrinsics)
@@ -136,7 +135,7 @@ component camgazebo {
                 yield ether;
     };
 
-    activity set_disto(in sequence<double,5> dist_values) {
+    activity set_disto(in sequence<float,5> dist_values) {
         task main;
 
         codel<start> camgz_set_disto(in dist_values, out intrinsics)
