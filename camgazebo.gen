@@ -33,12 +33,22 @@ component camgazebo {
     email           "martin.jacquet@laas.fr";
     lang			"c";
     require         "genom3 >= 2.99.26";
-    codels-require  "gazebo", "opencv";
+    codels-require  "gazebo";
 
+    /* ---- Interfaces ---------------------------------------------------- */
     provides or_camera;
 
+    /* ---- Exceptions ---------------------------------------------------- */
     exception e_mem { string<128> what; };
 
+    /* ---- Ports --------------------------------------------------------- */
+    /* interfaces ports:
+     *  port out  or::sensor::frame         frame;
+     *  port out  or::sensor::intrinsics    intrinsics;
+     *  port out  or::sensor::extrinsics    extrinsics;
+     */
+
+    /* ---- IDS ----------------------------------------------------------- */
     ids {
         or_camera::info info;
         or_camera::pipe pipe;
@@ -51,6 +61,7 @@ component camgazebo {
         } size;
     };
 
+    /* ---- Main task ----------------------------------------------------- */
     task main {
         period 1 ms;
 
@@ -74,46 +85,10 @@ component camgazebo {
 
     activity disconnect() {
         task main;
-        interrupt display_start;
+
         codel<start> camgz_disconnect(out data, out info.started)
             yield ether;
     };
-
-    /* ---- Display ------------------------------------------------------- */
-    activity display_start() {
-        task main;
-
-        codel<start> camgz_disp_start(in info.started)
-            yield disp, ether;
-
-        codel<disp> camgz_disp(inout data, in size)
-            yield pause::disp;
-
-        codel<stop> camgz_disp_stop()
-            yield ether;
-    };
-
-    function display_stop() {
-        interrupt display_start;
-    };
-
-    /* ---- Display/Record ------------------------------------------------ */
-    // activity record(in string<64> path = "/tmp/": "Video files path") {
-    //     task publish;
-    //
-    //     codel<start> camgz_rec_start()
-    //         yield rec;
-    //
-    //     codel<rec> camgz_rec()
-    //         yield pause::rec, stop;
-    //
-    //     codel<stop> camgz_rec_stop()
-    //         yield ether;
-    // };
-    //
-    // function stop_record() {
-    //     codel camgz_stop_record();
-    // };
 
     /* ---- Calibration --------------------------------------------------- */
     activity set_extrinsics(in sequence<float,6> ext_values) {

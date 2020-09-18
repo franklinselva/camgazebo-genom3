@@ -27,9 +27,6 @@
 
 #include "codels.hpp"
 
-#include <opencv2/opencv.hpp>
-
-using namespace cv;
 
 /* --- Calib helper  ------------------------------------------------------ */
 void compute_calib(or_sensor_intrinsics* intr, float hfov, camgazebo_ids_img_size size)
@@ -172,60 +169,6 @@ camgz_disconnect(or_camera_data **data, bool *started,
 
     warnx("disconnected from gazebo");
 
-    return camgazebo_ether;
-}
-
-
-/* --- Activity display_start ------------------------------------------- */
-
-/** Codel camgz_disp_start of activity display_start.
- *
- * Triggered by camgazebo_start.
- * Yields to camgazebo_disp, camgazebo_ether.
- */
-genom_event
-camgz_disp_start(bool started, const genom_context self)
-{
-    if (!started)
-        return camgazebo_ether;
-    else
-        namedWindow("camgazebo-genom3", WINDOW_NORMAL);
-        startWindowThread();
-        resizeWindow("camgazebo-genom3", 480, 270);
-        return camgazebo_disp;
-}
-
-/** Codel camgz_disp of activity display_start.
- *
- * Triggered by camgazebo_disp.
- * Yields to camgazebo_pause_disp.
- */
-genom_event
-camgz_disp(or_camera_data **data, const camgazebo_ids_img_size *size,
-           const genom_context self)
-{
-    if ((*data)->is_pub)
-    {
-        std::lock_guard<std::mutex> guard((*data)->lock);
-
-        Mat frame = Mat(Size(size->w, size->h), CV_8UC3, (void*)(*data)->data, Mat::AUTO_STEP);
-        circle(frame, Point(size->w/2,size->h/2), size->h/2, Scalar(0,0,255), 2);
-        imshow("camgazebo-genom3", frame);
-        (*data)->is_pub = false;
-    }
-
-    return camgazebo_pause_disp;
-}
-
-/** Codel camgz_disp_stop of activity display_start.
- *
- * Triggered by camgazebo_stop.
- * Yields to camgazebo_ether.
- */
-genom_event
-camgz_disp_stop(const genom_context self)
-{
-    destroyWindow("camgazebo-genom3");
     return camgazebo_ether;
 }
 
