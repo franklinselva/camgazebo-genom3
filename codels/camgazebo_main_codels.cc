@@ -34,11 +34,8 @@ using namespace cv;
 /* --- Calib helper  ------------------------------------------------------ */
 void compute_calib(or_sensor_intrinsics* intr, double hfov, uint16_t w, uint16_t h)
 {
-    double vfov = hfov*h/w;
-
     intr->calib._buffer[0] = w/2/tan(hfov/2);
     intr->calib._buffer[1] = w/2/tan(hfov/2);
-    // intr->calib._buffer[1] = h/2/tan(vfov/2);
     intr->calib._buffer[2] = 0;
     intr->calib._buffer[3] = w/2;
     intr->calib._buffer[4] = h/2;
@@ -174,17 +171,12 @@ camgz_connect(const char topic[256], or_camera_data **data,
  * Yields to camgazebo_ether.
  */
 genom_event
-camgz_disconnect(or_camera_data **data, or_camera_pipe **pipe,
-                 bool *started, const genom_context self)
+camgz_disconnect(or_camera_data **data, bool *started,
+                 const genom_context self)
 {
     std::lock_guard<std::mutex> guard((*data)->lock);
 
     gazebo::client::shutdown();
-    // (*pipe)->node->Fini();
-    // (*pipe)->sub->Unsubscribe();
-    // (*pipe)->node = NULL;
-    // (*pipe)->sub = NULL;
-
     *started = false;
 
     return camgazebo_ether;
@@ -205,6 +197,7 @@ camgz_disp_start(bool started, const genom_context self)
         return camgazebo_ether;
     else
         namedWindow("camgazebo-genom3", WINDOW_NORMAL);
+        resizeWindow("camgazebo-genom3", 480, 270);
         return camgazebo_disp;
 }
 
@@ -214,14 +207,14 @@ camgz_disp_start(bool started, const genom_context self)
  * Yields to camgazebo_pause_disp.
  */
 genom_event
-camgz_disp(const or_camera_data *data, uint16_t h, uint16_t w,
+camgz_disp(or_camera_data **data, uint16_t h, uint16_t w,
            const genom_context self)
 {
-    Mat frame;
-    Mat(Size(w, h), CV_8UC3, (void*)data->data, Mat::AUTO_STEP).copyTo(frame);
+    std::lock_guard<std::mutex> guard((*data)->lock);
+
+    Mat frame = Mat(Size(w, h), CV_8UC3, (void*)(*data)->data, Mat::AUTO_STEP);
     circle(frame, Point(w/2,h/2), h/2, Scalar(0,0,255), 2);
     imshow("camgazebo-genom3", frame);
-    resizeWindow("camgazebo-genom3", 480, 270);
     waitKey(1);
 
     return camgazebo_pause_disp;

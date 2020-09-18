@@ -77,7 +77,7 @@ component camgazebo {
     activity disconnect() {
         task main;
         interrupt display_start;
-        codel<start> camgz_disconnect(out data, out pipe, out info.started)
+        codel<start> camgz_disconnect(out data, out info.started)
             yield ether;
     };
 
@@ -88,7 +88,7 @@ component camgazebo {
         codel<start> camgz_disp_start(in info.started)
             yield disp, ether;
 
-        codel<disp> camgz_disp(in data, in h, in w)
+        codel<disp> camgz_disp(inout data, in h, in w)
             yield pause::disp;
 
         codel<stop> camgz_disp_stop()
