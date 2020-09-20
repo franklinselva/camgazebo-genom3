@@ -32,13 +32,9 @@
 #include <gazebo/msgs/msgs.hh>
 #include <gazebo/gazebo_client.hh>
 
-#include <iostream>
 #include <err.h>
 #include <mutex>
 #include <sys/time.h>
-
-using std::cout;
-using std::endl;
 
 struct or_camera_pipe {
     gazebo::transport::NodePtr node;
