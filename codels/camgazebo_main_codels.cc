@@ -33,7 +33,7 @@ void compute_calib(or_sensor_intrinsics* intr, float hfov, camgazebo_ids_img_siz
 {
     float f = size.w/2/tan(hfov/2);
     intr->calib = {
-        f, f, 0, (float)size.w/2, (float)size.h/2
+        f, f, (float)size.w/2, (float)size.h/2, 0
     };
 }
 
