@@ -50,7 +50,7 @@ struct or_camera_data {
     uint8_t* data;
     bool new_frame;
     std::mutex lock;
-    struct timeval tv;
+    timeval tv;
 
     or_camera_data(uint16_t w, uint16_t h)
     {
