@@ -53,8 +53,11 @@ camgz_start(camgazebo_ids *ids, const camgazebo_frame *frame,
             const genom_context self)
 {
     ids->info.started = false;
+
+    // These are the defaults values for the gazebo camera
     ids->hfov = 1.047;
-    ids->size = {1920, 1080};
+    ids->size = {320, 240};
+
     ids->data = new or_camera_data(ids->size.w, ids->size.h);
     ids->pipe = new or_camera_pipe();
 
