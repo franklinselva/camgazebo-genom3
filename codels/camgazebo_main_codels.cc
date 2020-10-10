@@ -199,7 +199,6 @@ camgz_set_extrinsics(const sequence6_float *ext_values,
     extrinsics->write(self);
 
     warnx("new extrinsic calibration");
-
     return camgazebo_ether;
 }
 
@@ -220,12 +219,9 @@ camgz_set_hfov(float hfov_val, float *hfov,
     *hfov = hfov_val;
 
     compute_calib(intrinsics->data(self), *hfov, *size);
-
-
     intrinsics->write(self);
 
-    warnx("new intrinsic calibration");
-
+    warnx("set horizontal fov");
     return camgazebo_ether;
 }
 
@@ -262,8 +258,7 @@ camgz_set_fmt(uint16_t w_val, uint16_t h_val, or_camera_data **data,
     compute_calib(intrinsics->data(self), hfov, *size);
     intrinsics->write(self);
 
-    warnx("new intrinsic calibration");
-
+    warnx("set image format");
     return camgazebo_ether;
 }
 
@@ -290,7 +285,6 @@ camgz_set_disto(const sequence5_float *dist_values,
 
     intrinsics->write(self);
 
-    warnx("new intrinsic calibration");
-
+    warnx("set distortion coefficients");
     return camgazebo_ether;
 }
