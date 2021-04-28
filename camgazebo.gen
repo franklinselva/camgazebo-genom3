@@ -91,6 +91,13 @@ component camgazebo {
     };
 
     /* ---- Calibration --------------------------------------------------- */
+    activity get_K(out sequence<float,5> K) {
+        task main;
+
+        codel<start> camgz_get_K(in intrinsics, out K)
+            yield ether;
+    };
+
     activity set_extrinsics(in sequence<float,6> ext_values) {
         task main;
 
@@ -108,7 +115,7 @@ component camgazebo {
     activity set_format(in unsigned short w_val = 1920 : "Camera pixel width",
                         in unsigned short h_val = 1080 : "Camera pixel height") {
         task main;
-        
+
             codel<start> camgz_set_fmt(in w_val, in h_val, out data, in hfov, out size, out frame, out intrinsics)
                 yield ether;
     };

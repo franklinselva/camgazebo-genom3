@@ -153,15 +153,20 @@ a|.Context
 
 '''
 
-[[display_start]]
-=== display_start (activity)
+[[get_K]]
+=== get_K (activity)
 
 [role="small", width="50%", float="right", cols="1"]
 |===
+a|.Outputs
+[disc]
+ * `sequence< float, 5 >` `K`
+
 a|.Context
 [disc]
   * In task `<<main>>`
   (frequency 1000.0 _Hz_)
+  * Updates port `<<intrinsics>>`
 |===
 
 '''

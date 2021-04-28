@@ -175,6 +175,27 @@ camgz_disconnect(or_camera_data **data, bool *started,
 }
 
 
+/* --- Activity get_K --------------------------------------------------- */
+
+/** Codel camgz_get_K of activity get_K.
+ *
+ * Triggered by camgazebo_start.
+ * Yields to camgazebo_ether.
+ */
+genom_event
+camgz_get_K(const camgazebo_intrinsics *intrinsics, sequence5_float *K,
+            const genom_context self)
+{
+    K->_length = 5;
+    K->_buffer[0] = intrinsics->data(self)->calib.fx;
+    K->_buffer[1] = intrinsics->data(self)->calib.fy;
+    K->_buffer[2] = intrinsics->data(self)->calib.cx;
+    K->_buffer[3] = intrinsics->data(self)->calib.cy;
+    K->_buffer[4] = intrinsics->data(self)->calib.gamma;
+    return camgazebo_ether;
+}
+
+
 /* --- Activity set_extrinsics ------------------------------------------ */
 
 /** Codel camgz_set_extrinsics of activity set_extrinsics.
