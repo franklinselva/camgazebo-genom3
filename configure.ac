@@ -1,3 +1,4 @@
+
 dnl Autoconf file for building camgazebo codels library.
 dnl
 dnl Copyright (c) 2020 LAAS/CNRS
@@ -56,7 +57,6 @@ PKG_CHECK_MODULES(requires, [
 ])
 PKG_CHECK_MODULES(codels_requires, [
   gazebo
-  opencv
 ])
 
 AC_PATH_PROG(GENOM3, [genom3], [no])
