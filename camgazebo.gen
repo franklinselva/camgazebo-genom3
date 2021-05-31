@@ -98,6 +98,20 @@ component camgazebo {
             yield ether;
     };
 
+    activity get_D(out sequence<float,5> D) {
+        task main;
+
+        codel<start> camgz_get_D(in intrinsics, out D)
+            yield ether;
+    };
+
+    activity get_extrinsics(out sequence<float,6> ext) {
+        task main;
+
+        codel<start> camgz_get_extrinsics(in extrinsics, out ext)
+            yield ether;
+    };
+
     activity set_extrinsics(in sequence<float,6> ext_values) {
         task main;
 

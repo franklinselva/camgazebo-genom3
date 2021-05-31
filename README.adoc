@@ -171,14 +171,38 @@ a|.Context
 
 '''
 
-[[display_stop]]
-=== display_stop (function)
+[[get_D]]
+=== get_D (activity)
 
 [role="small", width="50%", float="right", cols="1"]
 |===
+a|.Outputs
+[disc]
+ * `sequence< float, 5 >` `D`
+
 a|.Context
 [disc]
-  * Interrupts `<<display_start>>`
+  * In task `<<main>>`
+  (frequency 1000.0 _Hz_)
+  * Updates port `<<intrinsics>>`
+|===
+
+'''
+
+[[get_extrinsics]]
+=== get_extrinsics (activity)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Outputs
+[disc]
+ * `sequence< float, 6 >` `ext`
+
+a|.Context
+[disc]
+  * In task `<<main>>`
+  (frequency 1000.0 _Hz_)
+  * Updates port `<<extrinsics>>`
 |===
 
 '''

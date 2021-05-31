@@ -74,6 +74,8 @@ camgz_start(camgazebo_ids *ids, const camgazebo_frame *frame,
 
     // Publish initial calibration
     compute_calib(intrinsics->data(self), ids->hfov, ids->size);
+    intrinsics->data(self)->disto = {0,0,0,0,0};
+    *extrinsics->data(self) = {0,0,0,0,0,0};
 
     intrinsics->write(self);
     extrinsics->write(self);
@@ -192,6 +194,49 @@ camgz_get_K(const camgazebo_intrinsics *intrinsics, sequence5_float *K,
     K->_buffer[2] = intrinsics->data(self)->calib.cx;
     K->_buffer[3] = intrinsics->data(self)->calib.cy;
     K->_buffer[4] = intrinsics->data(self)->calib.gamma;
+    return camgazebo_ether;
+}
+
+
+/* --- Activity get_D --------------------------------------------------- */
+
+/** Codel camgz_get_D of activity get_D.
+ *
+ * Triggered by camgazebo_start.
+ * Yields to camgazebo_ether.
+ */
+genom_event
+camgz_get_D(const camgazebo_intrinsics *intrinsics, sequence5_float *D,
+            const genom_context self)
+{
+    D->_length = 5;
+    D->_buffer[0] = intrinsics->data(self)->disto.k1;
+    D->_buffer[1] = intrinsics->data(self)->disto.k2;
+    D->_buffer[2] = intrinsics->data(self)->disto.k2;
+    D->_buffer[3] = intrinsics->data(self)->disto.p1;
+    D->_buffer[4] = intrinsics->data(self)->disto.p2;
+    return camgazebo_ether;
+}
+
+
+/* --- Activity get_extrinsics ------------------------------------------ */
+
+/** Codel camgz_get_extrinsics of activity get_extrinsics.
+ *
+ * Triggered by camgazebo_start.
+ * Yields to camgazebo_ether.
+ */
+genom_event
+camgz_get_extrinsics(const camgazebo_extrinsics *extrinsics,
+                     sequence6_float *ext, const genom_context self)
+{
+    ext->_length = 5;
+    ext->_buffer[0] = extrinsics->data(self)->trans.tx;
+    ext->_buffer[1] = extrinsics->data(self)->trans.ty;
+    ext->_buffer[2] = extrinsics->data(self)->trans.tz;
+    ext->_buffer[3] = extrinsics->data(self)->rot.roll;
+    ext->_buffer[4] = extrinsics->data(self)->rot.pitch;
+    ext->_buffer[5] = extrinsics->data(self)->rot.yaw;
     return camgazebo_ether;
 }
 
