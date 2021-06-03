@@ -250,11 +250,9 @@ a|.Context
 |===
 a|.Inputs
 [disc]
- * `unsigned short` `w_val` (default `"1920"`) Camera pixel width
+ * `unsigned short` `w_val` (default `"320"`) Camera pixel width
 
- * `unsigned short` `h_val` (default `"1080"`) Camera pixel height
-
- * `unsigned short` `bpp_val` (default `"3"`) Byte par pixel (1 or 3)
+ * `unsigned short` `h_val` (default `"240"`) Camera pixel height
 
 a|.Context
 [disc]

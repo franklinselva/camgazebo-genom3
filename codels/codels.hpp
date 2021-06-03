@@ -29,6 +29,7 @@
 #include "camgazebo_c_types.h"
 
 #include <gazebo/transport/transport.hh>
+#include <gazebo/physics/physics.hh>
 #include <gazebo/msgs/msgs.hh>
 #include <gazebo/gazebo_client.hh>
 

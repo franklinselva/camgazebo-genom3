@@ -29,7 +29,7 @@
 
 
 /* --- Calib helper  ------------------------------------------------------ */
-void compute_calib(or_sensor_intrinsics* intr, float hfov, camgazebo_ids_img_size size)
+void compute_calib(or_sensor_intrinsics* intr, float hfov, or_camera_info_size_s size)
 {
     float f = size.w/2/tan(hfov/2);
     intr->calib = {
@@ -56,9 +56,10 @@ camgz_start(camgazebo_ids *ids, const camgazebo_frame *frame,
 
     // These are the defaults values for the gazebo camera
     ids->hfov = 1.047;
-    ids->size = {320, 240};
+    ids->info.size = {320, 240};
+    strncpy(ids->info.format, "RGB8", 5);
 
-    ids->data = new or_camera_data(ids->size.w, ids->size.h);
+    ids->data = new or_camera_data(ids->info.size.w, ids->info.size.h);
     ids->pipe = new or_camera_pipe();
 
     if (genom_sequence_reserve(&(frame->data(self)->pixels), ids->data->l) == -1) {
@@ -68,12 +69,12 @@ camgz_start(camgazebo_ids *ids, const camgazebo_frame *frame,
         return camgazebo_e_mem(&d,self);
     }
     frame->data(self)->pixels._length = ids->data->l;
-    frame->data(self)->height = ids->size.h;
-    frame->data(self)->width = ids->size.w;
+    frame->data(self)->height = ids->info.size.h;
+    frame->data(self)->width = ids->info.size.w;
     frame->data(self)->bpp = 3;
 
     // Publish initial calibration
-    compute_calib(intrinsics->data(self), ids->hfov, ids->size);
+    compute_calib(intrinsics->data(self), ids->hfov, ids->info.size);
     intrinsics->data(self)->disto = {0,0,0,0,0};
     *extrinsics->data(self) = {0,0,0,0,0,0};
 
@@ -278,7 +279,7 @@ camgz_set_extrinsics(const sequence6_float *ext_values,
  */
 genom_event
 camgz_set_hfov(float hfov_val, float *hfov,
-               const camgazebo_ids_img_size *size,
+               const or_camera_info_size_s *size,
                const camgazebo_intrinsics *intrinsics,
                const genom_context self)
 {
@@ -301,7 +302,7 @@ camgz_set_hfov(float hfov_val, float *hfov,
  */
 genom_event
 camgz_set_fmt(uint16_t w_val, uint16_t h_val, or_camera_data **data,
-              float hfov, camgazebo_ids_img_size *size,
+              float hfov, or_camera_info_size_s *size,
               const camgazebo_frame *frame,
               const camgazebo_intrinsics *intrinsics,
               const genom_context self)
