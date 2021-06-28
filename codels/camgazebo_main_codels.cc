@@ -85,7 +85,7 @@ camgz_start(camgazebo_ids *ids, const camgazebo_frame *frame,
     frame->data("raw", self)->bpp = 3;
     frame->data("raw", self)->compressed = false;
 
-    genom_sequence_reserve(&(frame->data("compressed", self)->pixels), 0);
+    (void)genom_sequence_reserve(&(frame->data("compressed", self)->pixels), 0);
     frame->data("compressed", self)->pixels._length = 0;
     frame->data("compressed", self)->height = ids->info.size.h;
     frame->data("compressed", self)->width = ids->info.size.w;
@@ -364,7 +364,7 @@ camgz_set_fmt(uint16_t w_val, uint16_t h_val, or_camera_data **data,
     frame->data("raw", self)->height = h_val;
     frame->data("raw", self)->width = w_val;
 
-    genom_sequence_reserve(&(frame->data("compressed", self)->pixels), 0);
+    (void)genom_sequence_reserve(&(frame->data("compressed", self)->pixels), 0);
     frame->data("compressed", self)->pixels._length = 0;
     frame->data("compressed", self)->height = h_val;
     frame->data("compressed", self)->width = w_val;
