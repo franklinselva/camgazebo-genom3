@@ -47,7 +47,7 @@ endif::[]
 
 
 [[frame]]
-=== frame (out)
+=== frame (multiple out)
 
 
 [role="small", width="50%", float="right", cols="1"]
@@ -58,6 +58,7 @@ a|.Data structure
  ** `struct ::or::time::ts` `ts`
  *** `long` `sec`
  *** `long` `nsec`
+ ** `boolean` `compressed`
  ** `unsigned short` `height`
  ** `unsigned short` `width`
  ** `unsigned short` `bpp`
@@ -234,6 +235,11 @@ a|.Inputs
 [disc]
  * `float` `hfov_val` (default `"1.047"`) Camera horizon FOV (in radians)
 
+a|.Throws
+[disc]
+ * `exception ::camgazebo::e_io`
+ ** `string<128>` `what`
+
 a|.Context
 [disc]
   * In task `<<main>>`
@@ -253,6 +259,11 @@ a|.Inputs
  * `unsigned short` `w_val` (default `"320"`) Camera pixel width
 
  * `unsigned short` `h_val` (default `"240"`) Camera pixel height
+
+a|.Throws
+[disc]
+ * `exception ::camgazebo::e_io`
+ ** `string<128>` `what`
 
 a|.Context
 [disc]
@@ -278,6 +289,24 @@ a|.Context
   * In task `<<main>>`
   (frequency 1000.0 _Hz_)
   * Updates port `<<intrinsics>>`
+|===
+
+'''
+
+[[set_compression]]
+=== set_compression (attribute)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `short` `compression_rate` (default `"-1"`) Image compression (0-100) ; -1 to disable compression.
+
+a|.Throws
+[disc]
+ * `exception ::camgazebo::e_io`
+ ** `string<128>` `what`
+
 |===
 
 '''

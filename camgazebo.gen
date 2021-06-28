@@ -33,17 +33,18 @@ component camgazebo {
     email           "martin.jacquet@laas.fr";
     lang			"c";
     require         "genom3 >= 2.99.26";
-    codels-require  "gazebo";
+    codels-require  "gazebo", "opencv";
 
     /* ---- Interfaces ---------------------------------------------------- */
     provides or_camera;
 
     /* ---- Exceptions ---------------------------------------------------- */
     exception e_mem { string<128> what; };
+    exception e_io { string<128> what; };
 
     /* ---- Ports --------------------------------------------------------- */
     /* interfaces ports:
-     *  port out  or::sensor::frame         frame;
+     *  port multiple out   or::sensor::frame    frame;
      *  port out  or::sensor::intrinsics    intrinsics;
      *  port out  or::sensor::extrinsics    extrinsics;
      */
@@ -69,7 +70,7 @@ component camgazebo {
         codel<wait> camgz_wait(in info.started, in data)
             yield pause::wait, pub;
 
-        codel<pub> camgz_pub(inout data, out frame)
+        codel<pub> camgz_pub(in info.compression_rate, inout data, out frame)
             yield wait;
     };
 
@@ -128,8 +129,8 @@ component camgazebo {
                         in unsigned short h_val = 240 : "Camera pixel height") {
         task main;
 
-            codel<start> camgz_set_fmt(in w_val, in h_val, out data, in hfov, out info.size, out frame, out intrinsics)
-                yield ether;
+        codel<start> camgz_set_fmt(in w_val, in h_val, out data, in hfov, out info.size, out frame, out intrinsics)
+            yield ether;
     };
 
     activity set_disto(in sequence<float,5> dist_values) {
@@ -137,5 +138,11 @@ component camgazebo {
 
         codel<start> camgz_set_disto(in dist_values, out intrinsics)
             yield ether;
+    };
+
+    /* ---- Control setters ----------------------------------------------- */
+    attribute set_compression(in info.compression_rate = -1 : "Image compression (0-100) ; -1 to disable compression.") {
+        throw e_io;
+        validate set_compression_rate(local in compression_rate);
     };
 };

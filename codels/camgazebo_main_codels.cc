@@ -27,7 +27,6 @@
 
 #include "codels.hpp"
 
-
 /* --- Calib helper  ------------------------------------------------------ */
 void compute_calib(or_sensor_intrinsics* intr, float hfov, or_camera_info_size_s size)
 {
@@ -62,17 +61,6 @@ camgz_start(camgazebo_ids *ids, const camgazebo_frame *frame,
     ids->data = new or_camera_data(ids->info.size.w, ids->info.size.h);
     ids->pipe = new or_camera_pipe();
 
-    if (genom_sequence_reserve(&(frame->data(self)->pixels), ids->data->l) == -1) {
-        camgazebo_e_mem_detail d;
-        snprintf(d.what, sizeof(d.what), "unable to allocate frame memory");
-        warnx("%s", d.what);
-        return camgazebo_e_mem(&d,self);
-    }
-    frame->data(self)->pixels._length = ids->data->l;
-    frame->data(self)->height = ids->info.size.h;
-    frame->data(self)->width = ids->info.size.w;
-    frame->data(self)->bpp = 3;
-
     // Publish initial calibration
     compute_calib(intrinsics->data(self), ids->hfov, ids->info.size);
     intrinsics->data(self)->disto = {0,0,0,0,0};
@@ -80,6 +68,29 @@ camgz_start(camgazebo_ids *ids, const camgazebo_frame *frame,
 
     intrinsics->write(self);
     extrinsics->write(self);
+
+    // Init frame ports
+    frame->open("raw", self);
+    frame->open("compressed", self);
+
+    if (genom_sequence_reserve(&(frame->data("raw", self)->pixels), ids->data->l) == -1) {
+        camgazebo_e_mem_detail d;
+        snprintf(d.what, sizeof(d.what), "unable to allocate frame memory");
+        warnx("%s", d.what);
+        return camgazebo_e_mem(&d,self);
+    }
+    frame->data("raw", self)->pixels._length = ids->data->l;
+    frame->data("raw", self)->height = ids->info.size.h;
+    frame->data("raw", self)->width = ids->info.size.w;
+    frame->data("raw", self)->bpp = 3;
+    frame->data("raw", self)->compressed = false;
+
+    genom_sequence_reserve(&(frame->data("compressed", self)->pixels), 0);
+    frame->data("compressed", self)->pixels._length = 0;
+    frame->data("compressed", self)->height = ids->info.size.h;
+    frame->data("compressed", self)->width = ids->info.size.w;
+    frame->data("compressed", self)->bpp = 3;
+    frame->data("compressed", self)->compressed = true;
 
     return camgazebo_wait;
 }
@@ -106,18 +117,50 @@ camgz_wait(bool started, const or_camera_data *data,
  * Yields to camgazebo_wait.
  */
 genom_event
-camgz_pub(or_camera_data **data, const camgazebo_frame *frame,
-          const genom_context self)
+camgz_pub(int16_t compression_rate, or_camera_data **data,
+          const camgazebo_frame *frame, const genom_context self)
 {
-    or_sensor_frame* fdata = frame->data(self);
+    or_sensor_frame* rfdata = frame->data("raw", self);
+    or_sensor_frame* cfdata = frame->data("compressed", self);
 
     std::lock_guard<std::mutex> guard((*data)->lock);
 
-    fdata->pixels._buffer = (uint8_t*)(*data)->data;
-    fdata->ts.sec = (*data)->tv.tv_sec;
-    fdata->ts.nsec = (*data)->tv.tv_usec * 1000;
+    memcpy(rfdata->pixels._buffer, (*data)->data, rfdata->pixels._length);
 
-    frame->write(self);
+    rfdata->ts.sec = (*data)->tv.tv_sec;
+    rfdata->ts.nsec = (*data)->tv.tv_usec * 1000;
+
+    if (compression_rate != -1)
+    {
+        Mat cvframe = Mat(
+            Size(rfdata->width, rfdata->height),
+            CV_8UC3,
+            rfdata->pixels._buffer,
+            Mat::AUTO_STEP
+        );
+
+        std::vector<int32_t> compression_params;
+        compression_params.push_back(IMWRITE_JPEG_QUALITY);
+        compression_params.push_back(compression_rate);
+
+        std::vector<uint8_t> buf;
+        imencode(".jpg", cvframe, buf, compression_params);
+
+        if (buf.size() > cfdata->pixels._maximum)
+            if (genom_sequence_reserve(&(cfdata->pixels), buf.size())  == -1) {
+                camgazebo_e_mem_detail d;
+                snprintf(d.what, sizeof(d.what), "unable to allocate frame memory");
+                warnx("%s", d.what);
+                return camgazebo_e_mem(&d,self);
+            }
+        cfdata->pixels._length = buf.size();
+
+        memcpy(cfdata->pixels._buffer, buf.data(), buf.size());
+        cfdata->ts = rfdata->ts;
+    }
+
+    frame->write("raw", self);
+    frame->write("compressed", self);
 
     (*data)->new_frame = false;
 
@@ -311,16 +354,20 @@ camgz_set_fmt(uint16_t w_val, uint16_t h_val, or_camera_data **data,
 
     (*data)->set_size(w_val, h_val);
 
-    if (genom_sequence_reserve(&(frame->data(self)->pixels), (*data)->l) == -1) {
+    if (genom_sequence_reserve(&(frame->data("raw", self)->pixels), (*data)->l) == -1) {
         camgazebo_e_mem_detail d;
         snprintf(d.what, sizeof(d.what), "unable to allocate frame memory");
         warnx("%s", d.what);
         return camgazebo_e_mem(&d,self);
     }
-    frame->data(self)->pixels._length = (*data)->l;
-    frame->data(self)->height = h_val;
-    frame->data(self)->width = w_val;
+    frame->data("raw", self)->pixels._length = (*data)->l;
+    frame->data("raw", self)->height = h_val;
+    frame->data("raw", self)->width = w_val;
 
+    genom_sequence_reserve(&(frame->data("compressed", self)->pixels), 0);
+    frame->data("compressed", self)->pixels._length = 0;
+    frame->data("compressed", self)->height = h_val;
+    frame->data("compressed", self)->width = w_val;
 
     compute_calib(intrinsics->data(self), hfov, *size);
     intrinsics->write(self);

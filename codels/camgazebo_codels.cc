@@ -25,4 +25,29 @@
 
 #include "camgazebo_c_types.h"
 
-#include "codels.hpp"
+#include <err.h>
+#include <cstdio>
+#include <iostream>
+
+/* --- Attribute set_compression ---------------------------------------- */
+
+/** Validation codel set_compression_rate of attribute set_compression.
+ *
+ * Returns genom_ok.
+ * Throws camgazebo_e_io.
+ */
+genom_event
+set_compression_rate(int16_t compression_rate,
+                     const genom_context self)
+{
+    if (compression_rate >= -1 && compression_rate <= 100)
+        return genom_ok;
+    else
+    {
+        camgazebo_e_io_detail d;
+        snprintf(d.what, sizeof(d.what), "%s", "unallowed compression rate");
+        warnx("io error: %s", d.what);
+        return camgazebo_e_io(&d,self);
+    }
+    return genom_ok;
+}

@@ -35,6 +35,9 @@
 #include <mutex>
 #include <sys/time.h>
 
+#include <opencv2/opencv.hpp>
+using namespace cv;
+
 struct or_camera_pipe {
     gazebo::transport::NodePtr node;
     gazebo::transport::SubscriberPtr sub;
