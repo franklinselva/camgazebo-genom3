@@ -57,6 +57,7 @@ camgz_start(camgazebo_ids *ids, const camgazebo_frame *frame,
     ids->hfov = 1.047;
     ids->info.size = {320, 240};
     strncpy(ids->info.format, "RGB8", 5);
+    ids->info.compression_rate = -1;
 
     ids->data = new or_camera_data(ids->info.size.w, ids->info.size.h);
     ids->pipe = new or_camera_pipe();
