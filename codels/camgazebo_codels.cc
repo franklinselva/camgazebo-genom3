@@ -27,7 +27,6 @@
 
 #include <err.h>
 #include <cstdio>
-#include <iostream>
 
 /* --- Attribute set_compression ---------------------------------------- */
 

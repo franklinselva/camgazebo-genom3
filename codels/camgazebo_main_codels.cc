@@ -131,6 +131,8 @@ camgz_pub(int16_t compression_rate, or_camera_data **data,
     rfdata->ts.sec = (*data)->tv.tv_sec;
     rfdata->ts.nsec = (*data)->tv.tv_usec * 1000;
 
+    frame->write("raw", self);
+
     if (compression_rate != -1)
     {
         Mat cvframe = Mat(
@@ -158,10 +160,9 @@ camgz_pub(int16_t compression_rate, or_camera_data **data,
 
         memcpy(cfdata->pixels._buffer, buf.data(), buf.size());
         cfdata->ts = rfdata->ts;
-    }
 
-    frame->write("raw", self);
-    frame->write("compressed", self);
+        frame->write("compressed", self);
+    }
 
     (*data)->new_frame = false;
 
