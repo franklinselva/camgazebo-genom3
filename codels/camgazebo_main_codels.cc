@@ -56,7 +56,7 @@ camgz_start(camgazebo_ids *ids, const camgazebo_frame *frame,
     // These are the defaults values for the gazebo camera
     ids->hfov = 1.047;
     ids->info.size = {320, 240};
-    strncpy(ids->info.format, "RGB8", 5);
+    strncpy(ids->info.format, "Y8", 5);
     ids->info.compression_rate = -1;
 
     ids->data = new or_camera_data(ids->info.size.w, ids->info.size.h);
@@ -83,14 +83,14 @@ camgz_start(camgazebo_ids *ids, const camgazebo_frame *frame,
     frame->data("raw", self)->pixels._length = ids->data->l;
     frame->data("raw", self)->height = ids->info.size.h;
     frame->data("raw", self)->width = ids->info.size.w;
-    frame->data("raw", self)->bpp = 3;
+    frame->data("raw", self)->bpp = 1;
     frame->data("raw", self)->compressed = false;
 
     (void)genom_sequence_reserve(&(frame->data("compressed", self)->pixels), 0);
     frame->data("compressed", self)->pixels._length = 0;
     frame->data("compressed", self)->height = ids->info.size.h;
     frame->data("compressed", self)->width = ids->info.size.w;
-    frame->data("compressed", self)->bpp = 3;
+    frame->data("compressed", self)->bpp = 1;
     frame->data("compressed", self)->compressed = true;
 
     return camgazebo_wait;
