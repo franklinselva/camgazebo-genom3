@@ -71,7 +71,7 @@ struct or_camera_data {
         else
         {
             gettimeofday(&(this->tv), NULL);
-            memcpy(this->data, _msg->image().data().c_str(), _msg->image().data().length());
+            memcpy(this->data, _msg->image().data().c_str(), _msg->image().data().length()); // sizeof *this->data == 1
             this->new_frame = true;
         }
     }

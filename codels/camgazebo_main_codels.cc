@@ -125,8 +125,7 @@ camgz_pub(int16_t compression_rate, or_camera_data **data,
     or_sensor_frame* cfdata = frame->data("compressed", self);
 
     std::lock_guard<std::mutex> guard((*data)->lock);
-
-    memcpy(rfdata->pixels._buffer, (*data)->data, rfdata->pixels._length);
+    memcpy(rfdata->pixels._buffer, (*data)->data, rfdata->pixels._length); // sizeof *rfdata->pixels._buffer == 1
 
     rfdata->ts.sec = (*data)->tv.tv_sec;
     rfdata->ts.nsec = (*data)->tv.tv_usec * 1000;
@@ -158,7 +157,7 @@ camgz_pub(int16_t compression_rate, or_camera_data **data,
             }
         cfdata->pixels._length = buf.size();
 
-        memcpy(cfdata->pixels._buffer, buf.data(), buf.size());
+        memcpy(cfdata->pixels._buffer, buf.data(), buf.size()); // sizeof *buf.data() == 1
         cfdata->ts = rfdata->ts;
 
         frame->write("compressed", self);
