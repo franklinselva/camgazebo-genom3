@@ -126,10 +126,12 @@ component camgazebo {
     };
 
     activity set_format(in unsigned short w_val = 320 : "Camera pixel width",
-                        in unsigned short h_val = 240 : "Camera pixel height") {
+                        in unsigned short h_val = 240 : "Camera pixel height",
+                        in unsigned short c_val = 3 : "Number of image channels (1,3)") {
         task main;
+        throw e_io;
 
-        codel<start> camgz_set_fmt(in w_val, in h_val, out data, in hfov, out info.size, out frame, out intrinsics)
+        codel<start> camgz_set_fmt(in w_val, in h_val, in c_val, out data, in hfov, out info.size, out info.format, out frame, out intrinsics)
             yield ether;
     };
 

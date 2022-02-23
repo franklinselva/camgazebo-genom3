@@ -50,14 +50,14 @@ struct or_camera_data {
     std::mutex lock;
     timeval tv;
 
-    or_camera_data(uint16_t w, uint16_t h)
+    or_camera_data(uint16_t w, uint16_t h, uint16_t c)
     {
-        this->set_size(w, h);
+        this->set_size(w, h, c);
     }
 
-    void set_size(uint16_t w, uint16_t h)
+    void set_size(uint16_t w, uint16_t h, uint16_t c)
     {
-        this->l = h * w * 1;
+        this->l = h * w * c;
         this->data = new uint8_t[l];
         this->new_frame = false;
     }

@@ -56,10 +56,10 @@ camgz_start(camgazebo_ids *ids, const camgazebo_frame *frame,
     // These are the defaults values for the gazebo camera
     ids->hfov = 1.047;
     ids->info.size = {320, 240};
-    strncpy(ids->info.format, "Y8", 5);
+    snprintf(ids->info.format, sizeof(char)*8, "RBG8");
     ids->info.compression_rate = -1;
 
-    ids->data = new or_camera_data(ids->info.size.w, ids->info.size.h);
+    ids->data = new or_camera_data(ids->info.size.w, ids->info.size.h, 3);
     ids->pipe = new or_camera_pipe();
 
     // Publish initial calibration
@@ -343,17 +343,23 @@ camgz_set_hfov(float hfov_val, float *hfov,
  *
  * Triggered by camgazebo_start.
  * Yields to camgazebo_ether.
+ * Throws camgazebo_e_io.
  */
 genom_event
-camgz_set_fmt(uint16_t w_val, uint16_t h_val, or_camera_data **data,
-              float hfov, or_camera_info_size_s *size,
+camgz_set_fmt(uint16_t w_val, uint16_t h_val, uint16_t c_val,
+              or_camera_data **data, float hfov,
+              or_camera_info_size_s *size, char format[8],
               const camgazebo_frame *frame,
               const camgazebo_intrinsics *intrinsics,
               const genom_context self)
 {
     *size = {w_val, h_val};
+    if (c_val == 1)
+        snprintf(format, sizeof(char)*8, "Y8");
+    if (c_val == 3)
+        snprintf(format, sizeof(char)*8, "RBG8");
 
-    (*data)->set_size(w_val, h_val);
+    (*data)->set_size(w_val, h_val, c_val);
 
     if (genom_sequence_reserve(&(frame->data("raw", self)->pixels), (*data)->l) == -1) {
         camgazebo_e_mem_detail d;

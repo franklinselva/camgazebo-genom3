@@ -22,6 +22,7 @@
 //                                                  Martin Jacquet - June 2020
 //
 
+
 // This file was generated from camgazebo.gen by the skeleton
 // template. Manual changes should be preserved, although they should
 // rather be added to the "doc" attributes of the genom objects defined in
@@ -111,10 +112,6 @@ a|.Data structure
  *** `float` `roll`
  *** `float` `pitch`
  *** `float` `yaw`
- ** `struct ::or::sensor::translation` `trans`
- *** `float` `tx`
- *** `float` `ty`
- *** `float` `tz`
 
 |===
 
@@ -149,7 +146,6 @@ a|.Context
 [disc]
   * In task `<<main>>`
   (frequency 1000.0 _Hz_)
-  * Interrupts `<<display_start>>`
 |===
 
 '''
@@ -235,11 +231,6 @@ a|.Inputs
 [disc]
  * `float` `hfov_val` (default `"1.047"`) Camera horizon FOV (in radians)
 
-a|.Throws
-[disc]
- * `exception ::camgazebo::e_io`
- ** `string<128>` `what`
-
 a|.Context
 [disc]
   * In task `<<main>>`
@@ -259,6 +250,8 @@ a|.Inputs
  * `unsigned short` `w_val` (default `"320"`) Camera pixel width
 
  * `unsigned short` `h_val` (default `"240"`) Camera pixel height
+
+ * `unsigned short` `c_val` (default `"3"`) Number of image channels (1,3)
 
 a|.Throws
 [disc]
