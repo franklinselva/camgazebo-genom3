@@ -136,7 +136,7 @@ camgz_pub(int16_t compression_rate, or_camera_data **data,
     {
         Mat cvframe = Mat(
             Size(rfdata->width, rfdata->height),
-            CV_8UC3,
+            rfdata->bpp == 1 ? CV_8UC1 : CV_8UC3,
             rfdata->pixels._buffer,
             Mat::AUTO_STEP
         );
@@ -370,11 +370,13 @@ camgz_set_fmt(uint16_t w_val, uint16_t h_val, uint16_t c_val,
     frame->data("raw", self)->pixels._length = (*data)->l;
     frame->data("raw", self)->height = h_val;
     frame->data("raw", self)->width = w_val;
+    frame->data("raw", self)->bpp = c_val;
 
     (void)genom_sequence_reserve(&(frame->data("compressed", self)->pixels), 0);
     frame->data("compressed", self)->pixels._length = 0;
     frame->data("compressed", self)->height = h_val;
     frame->data("compressed", self)->width = w_val;
+    frame->data("compressed", self)->bpp = c_val;
 
     compute_calib(intrinsics->data(self), hfov, *size);
     intrinsics->write(self);
