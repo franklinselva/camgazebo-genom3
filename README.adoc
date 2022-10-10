@@ -313,7 +313,7 @@ a|.Throws
 |===
 a|.Context
 [disc]
-  * Frequency 1000.0 _Hz_
+  * Free running
 * Updates port `<<frame>>`
 * Updates port `<<intrinsics>>`
 * Updates port `<<extrinsics>>`

@@ -60,15 +60,16 @@ component camgazebo {
         float hfov;
     };
 
+    /* ---- Constants ----------------------------------------------------- */
+    const unsigned short poll_duration_sec = 1; // duration (sec) of each poll before releasing mutex
+
     /* ---- Main task ----------------------------------------------------- */
     task main {
-        period 1 ms;
-
         codel<start> camgz_start(out ::ids, out frame, out extrinsics, out intrinsics)
             yield wait;
 
-        codel<wait> camgz_wait(in info.started, in data)
-            yield pause::wait, pub;
+        async codel<wait> camgz_wait(in info.started, inout data)
+            yield pause::wait, wait, pub;
 
         codel<pub> camgz_pub(in info.compression_rate, inout data, out frame)
             yield wait;

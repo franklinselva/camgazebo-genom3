@@ -27,6 +27,13 @@
 
 #include "codels.hpp"
 
+#include <condition_variable>
+#include <mutex>
+#include <chrono>
+#include <opencv2/opencv.hpp>
+using namespace cv;
+
+
 /* --- Calib helper  ------------------------------------------------------ */
 void compute_calib(or_sensor_intrinsics* intr, float hfov, or_camera_info_size_s size)
 {
@@ -56,7 +63,7 @@ camgz_start(camgazebo_ids *ids, const camgazebo_frame *frame,
     // These are the defaults values for the gazebo camera
     ids->hfov = 1.047;
     ids->info.size = {320, 240};
-    snprintf(ids->info.format, sizeof(char)*8, "RBG8");
+    snprintf(ids->info.format, sizeof(char)*8, "Y8");
     ids->info.compression_rate = -1;
 
     ids->data = new or_camera_data(ids->info.size.w, ids->info.size.h, 3);
@@ -100,14 +107,24 @@ camgz_start(camgazebo_ids *ids, const camgazebo_frame *frame,
 /** Codel camgz_wait of task main.
  *
  * Triggered by camgazebo_wait.
- * Yields to camgazebo_pause_wait, camgazebo_pub.
+ * Yields to camgazebo_pause_wait, camgazebo_wait, camgazebo_pub.
  */
 genom_event
-camgz_wait(bool started, const or_camera_data *data,
+camgz_wait(bool started, or_camera_data **data,
            const genom_context self)
 {
-    if (!started || !(data->new_frame))
+    if (!started)
         return camgazebo_pause_wait;
+
+    std::unique_lock<std::mutex> lock((*data)->m);
+
+    if (!(*data)->new_frame)
+    {
+        (*data)->cv.wait_for(lock, std::chrono::duration<int16_t>(camgazebo_poll_duration_sec));
+
+        if (!(*data)->new_frame)
+            return camgazebo_wait;
+    }
     return camgazebo_pub;
 }
 
@@ -122,18 +139,24 @@ camgz_pub(int16_t compression_rate, or_camera_data **data,
           const camgazebo_frame *frame, const genom_context self)
 {
     or_sensor_frame* rfdata = frame->data("raw", self);
-    or_sensor_frame* cfdata = frame->data("compressed", self);
 
-    std::lock_guard<std::mutex> guard((*data)->lock);
+    std::unique_lock<std::mutex> lock((*data)->m);
+
     memcpy(rfdata->pixels._buffer, (*data)->data, rfdata->pixels._length); // sizeof *rfdata->pixels._buffer == 1
 
     rfdata->ts.sec = (*data)->tv.tv_sec;
     rfdata->ts.nsec = (*data)->tv.tv_usec * 1000;
 
+    (*data)->new_frame = false;
+    lock.unlock();
+    (*data)->cv.notify_all();
+
     frame->write("raw", self);
 
     if (compression_rate != -1)
     {
+        or_sensor_frame* cfdata = frame->data("compressed", self);
+
         Mat cvframe = Mat(
             Size(rfdata->width, rfdata->height),
             rfdata->bpp == 1 ? CV_8UC1 : CV_8UC3,
@@ -163,8 +186,6 @@ camgz_pub(int16_t compression_rate, or_camera_data **data,
         frame->write("compressed", self);
     }
 
-    (*data)->new_frame = false;
-
     return camgazebo_wait;
 }
 
@@ -190,6 +211,8 @@ camgz_connect(const char topic[256], or_camera_data **data,
         (*pipe)->node = gazebo::transport::NodePtr(new gazebo::transport::Node());
         (*pipe)->node->Init();
 
+        std::lock_guard<std::mutex> guard((*data)->m);
+
         (*pipe)->sub = (*pipe)->node->Subscribe(topic, &or_camera_data::cb, *data);
 
         warnx("connected to %s", topic);
@@ -211,7 +234,7 @@ genom_event
 camgz_disconnect(or_camera_data **data, bool *started,
                  const genom_context self)
 {
-    std::lock_guard<std::mutex> guard((*data)->lock);
+    std::lock_guard<std::mutex> guard((*data)->m);
 
     gazebo::client::shutdown();
     *started = false;

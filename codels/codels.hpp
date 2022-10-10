@@ -32,11 +32,9 @@
 #include <gazebo/gazebo_client.hh>
 
 #include <err.h>
+#include <condition_variable>
 #include <mutex>
 #include <sys/time.h>
-
-#include <opencv2/opencv.hpp>
-using namespace cv;
 
 struct or_camera_pipe {
     gazebo::transport::NodePtr node;
@@ -46,33 +44,51 @@ struct or_camera_pipe {
 struct or_camera_data {
     uint64_t l;
     uint8_t* data;
-    bool new_frame;
-    std::mutex lock;
+    bool prompt_size_error;
+    bool new_frame = false;
+    std::mutex m;
+    std::condition_variable cv;
+
     timeval tv;
 
-    or_camera_data(uint16_t w, uint16_t h, uint16_t c)
-    {
-        this->set_size(w, h, c);
-    }
+    or_camera_data(uint16_t w, uint16_t h, uint16_t c) { set_size(w, h, c); }
+    ~or_camera_data() { delete data; }
 
     void set_size(uint16_t w, uint16_t h, uint16_t c)
     {
-        this->l = h * w * c;
-        this->data = new uint8_t[l];
-        this->new_frame = false;
+        l = h * w * c;
+        data = new uint8_t[l];
+        prompt_size_error = false;
     }
 
     void cb(ConstImageStampedPtr &_msg)
     {
-        std::lock_guard<std::mutex> guard(this->lock);
-
-        if (_msg->image().data().length() != this->l)
-            warnx("Skipping frame, incorrect size");
-        else
+        if (_msg->image().data().length() == l)
         {
-            gettimeofday(&(this->tv), NULL);
-            memcpy(this->data, _msg->image().data().c_str(), _msg->image().data().length()); // sizeof *this->data == 1
-            this->new_frame = true;
+            std::unique_lock<std::mutex> lock(this->m);
+            // the main thread releases the lock between codels wait and pub,
+            // therefore the callback might retrieve it before the previous frame is published
+            // (although its very unlikely)
+            // if new_frame predicate is still true, wait for main thread to ping
+            // wait for 16ms before dropping current frame (frame interval at 60Hz)
+            if (new_frame)
+                cv.wait_for(lock, std::chrono::duration<float>(16e-3));
+
+            if (!new_frame)
+            {
+                gettimeofday(&(tv), NULL);
+                memcpy(data, _msg->image().data().c_str(), l); // sizeof *this->data == 1
+                new_frame = true;
+                lock.unlock();
+                cv.notify_all();
+            }
+            else
+                warnx("frame dropped, is some processing too long?");   // should never prompt
+        }
+        else if (!prompt_size_error)
+        {
+            warnx("incorrect frame size; call set_format with values from gazebo model");
+            prompt_size_error = true;
         }
     }
 };
